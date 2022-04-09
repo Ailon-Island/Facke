@@ -1,7 +1,5 @@
 import torch
 from torch import nn
-import torch.nn.functional as F
-from models.model_base import ModelBase
 
 class AdaIn(nn.Module):
     def __init__(self, latent_size, dim):
