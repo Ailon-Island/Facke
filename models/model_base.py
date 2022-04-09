@@ -1,9 +1,9 @@
 import os
 import torch
 from torch import nn
-class model_base(nn.Module):
+class ModelBase(nn.Module):
     def __init__(self):
-        super(model_base, self).__init__()
+        super(ModelBase, self).__init__()
 
     def init(self, opt):
         self.opt = opt
