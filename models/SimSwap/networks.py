@@ -1,6 +1,10 @@
 import torch
 from torch import nn
 
+###############################################################################
+# Code from
+# https://github.com/neuralchen/SimSwap
+###############################################################################
 class AdaIn(nn.Module):
     def __init__(self, latent_size, dim):
         super(AdaIn, self).__init__()
@@ -8,11 +12,11 @@ class AdaIn(nn.Module):
         self.FC = nn.Linear(latent_size, dim * 2) # one for mean and another for var
 
 
-    def forward(self, x, latent):
-        id_style = self.linear(latent)
-        id_style = id_style.view(-1, 2, x.size(1), 1, 1)
+    def forward(self, x, latent_ID):
+        ID_style = self.linear(latent_ID)
+        ID_style = ID_style.view(-1, 2, x.size(1), 1, 1)
 
-        x = x * (id_style[:, 0] * 1 + 1.) + id_style[:, 1] * 1 # why *1 ?
+        x = x * (ID_style[:, 0] * 1 + 1.) + ID_style[:, 1] * 1 # why *1 ?
         return x
 
 

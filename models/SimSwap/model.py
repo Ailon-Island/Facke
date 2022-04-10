@@ -5,9 +5,8 @@ sys.path.append(root_path)
 import torch
 from torch import nn
 import torch.nn.functional as F
-from torchvision import transforms
 from utils import loss
-from utils import IDExtractor
+from utils import IDExtract
 from . import networks
 from ..model_base import ModelBase
 
@@ -15,13 +14,16 @@ class GAN(ModelBase):
     def __init__(self):
         super(GAN, self).__init__()
 
+        self.ID_extract = IDExtract()
+
 
     def init(self, opt):
         ModelBase.init(self, opt)
 
         self.isTrain = opt.isTrain
+        self.gpu_ids = opt.gpu_ids
 
-        device = torch.device("cuda:0")
+        device = torch.device(self.gpu_ids[0])
 
         # Generator
         self.G = networks.Generator(in_channels=3, out_channels=3, latent_size=512, num_ID_blocks=9)
@@ -118,7 +120,7 @@ class GAN(ModelBase):
         loss_G_GAN_feat *= self.opt.lambda_wFM
 
         # G ID
-        latent_ID_fake = IDExtractor(img_fake)
+        latent_ID_fake = self.ID_extract(img_fake)
         loss_G_ID = self.IDloss(latent_ID_fake, latent_ID)
         loss_G_ID *= self.opt.lambda_id
 
@@ -135,7 +137,7 @@ class GAN(ModelBase):
         self.save_net(self.D2, 'D2', epoch_label, self.gpu_ids)
 
 
-    def unfixe_G(self):
+    def unlock_G(self):
         params = list(self.G.parameters())
         self.optim_G = torch.optim.Adam(params, lr=self.opt.lr, betas=(self.opt.beta1, 0.999))
 
@@ -143,7 +145,7 @@ class GAN(ModelBase):
     def update_lr(self):
         lr_decay = self.opt.lr / self.opt.niter_decay
         lr = self.old_lr - lr_decay
-        
+
         for param_group in self.optim_D.param_groups:
             param_group['lr'] = lr
         for param_group in self.optim_G.param_groups:

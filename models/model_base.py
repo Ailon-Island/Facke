@@ -1,3 +1,7 @@
+###############################################################################
+# Code from
+# https://github.com/neuralchen/SimSwap
+###############################################################################
 import os
 import sys
 import torch
@@ -13,7 +17,7 @@ class ModelBase(nn.Module):
         self.gpu_ids = opt.gpu_ids
         self.isTrain = opt.isTrain
         self.Tensor = torch.cuda.FloatTensor if self.gpu_ids else torch.Tensor
-        self.save_dir = os.path.join(opt.checkpoint_dir, opt.model_name)
+        self.save_dir = os.path.join(opt.checkpoint_dir, opt.name)
 
 
     def forward(self):
