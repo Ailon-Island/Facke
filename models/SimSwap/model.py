@@ -6,7 +6,7 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 from torchvision import transforms
-import utils.loss
+from utils import loss
 from . import networks
 from ..model_base import ModelBase
 
@@ -65,7 +65,11 @@ class GAN(ModelBase):
             self.load_net(self.D2, opt.epoch_label, 'D2', pretrained_path)
 
         # loss functions
-        self.GANloss = loss.
+        self.IDloss = loss.IDLoss()
+        self.Recloss = nn.L1Loss()
+        self.GANloss = loss.GANLoss(opt.gan_mode, tensor=self.Tensor, opt=opt)
+        self.GPloss = loss.GPLoss()
+        self.wFMloss = nn.L1Loss()
 
         # optimizers
         params = list(self.G.parameters())

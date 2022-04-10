@@ -1,6 +1,7 @@
 import torch
 from torch import nn
 import torch.nn.functional as F
+from torch.autograd import Variable
 
 class LossBase(nn.Module):
     def __init__(self):
@@ -16,9 +17,9 @@ class LossBase(nn.Module):
 
 
 
-class GANloss(LossBase):
+class GANLoss(LossBase):
     def __init__(self, gan_mode, real_label=1., fake_label=0., Tensor=torch.FloatTensor, opt=None):
-        super(GANloss, self).__init__()
+        super(GANLoss, self).__init__()
 
         self.gan_mode = gan_mode
         self.real_label = real_label
@@ -88,3 +89,51 @@ class GANloss(LossBase):
             return loss / len(input)
         else:
             return self.loss(input, is_real, forD)
+
+
+
+class IDLoss(LossBase):
+    def __init__(self):
+        super(IDLoss, self).__init__()
+
+        self.sim = nn.CosineSimilarity()
+
+    def forward(self, x, y):
+        x = self.sim(x,y)
+        x = 1 - x
+        return x
+
+
+
+class GPLoss(LossBase):
+    def __init__(self):
+        super(GPLoss, self).__init__()
+
+    def forward(self, D, img_att, img_fake):
+        # interpolation
+        batch_size = img_fake.shape[0]
+        alpha = torch.rand(batch_size, 1, 1, 1).expand_as(img_fake).cuda()
+        img_interp = Variable(alpha * img_att + (1-alpha) * img_fake, requires_grad=True)
+
+        # get gradients
+        pred_interp = D.forward(img_interp)
+        pred_interp = pred_interp[-1]
+        grad = torch.autograd.grad(outputs=pred_interp,
+                                   inputs=img_interp,
+                                   grad_outputs=torch.ones(pred_interp.size()).cuda(),
+                                   retain_graph=True,
+                                   create_graph=True,
+                                   only_inputs=True)[0]
+
+        # compute loss
+        grad = grad.view(grad.size(0), -1)
+        grad_norm = torch.norm(grad, dim=1)
+        loss = torch.mean((grad_norm - 1) ** 2)
+
+        return loss
+    
+    
+    
+class WFMLoss(LossBase):
+    def __init__(self):
+        super(WFMLoss, self).__init__()    
