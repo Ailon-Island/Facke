@@ -109,11 +109,11 @@ class GPLoss(LossBase):
     def __init__(self):
         super(GPLoss, self).__init__()
 
-    def forward(self, D, img_att, img_fake):
+    def forward(self, D, img_real, img_fake):
         # interpolation
         batch_size = img_fake.shape[0]
         alpha = torch.rand(batch_size, 1, 1, 1).expand_as(img_fake).cuda()
-        img_interp = Variable(alpha * img_att + (1-alpha) * img_fake, requires_grad=True)
+        img_interp = Variable(alpha * img_real + (1-alpha) * img_fake, requires_grad=True)
 
         # get gradients
         pred_interp = D.forward(img_interp)
@@ -135,5 +135,21 @@ class GPLoss(LossBase):
     
     
 class WFMLoss(LossBase):
-    def __init__(self):
-        super(WFMLoss, self).__init__()    
+    def __init__(self, num_layers, num_D):
+        super(WFMLoss, self).__init__()
+
+        self.feat_weight = 4. / (num_layers + 1)
+        self.D_weight = 1. / num_D
+        self.diff = nn.L1Loss()
+
+
+    def forward(self, feat):
+        loss = 0
+        for (feat_D_real, feat_D_fake) in zip(*feat):
+            for (feat_layer_real, feat_layer_fake) in zip(feat_D_real, feat_D_fake):
+                loss += self.diff(feat_layer_real, feat_layer_fake)
+        loss = self.feat_weight * self.D_weight
+
+        return loss
+
+
