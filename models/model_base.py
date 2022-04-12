@@ -6,6 +6,7 @@ import os
 import sys
 import torch
 from torch import nn
+from utils import utils
 
 class ModelBase(nn.Module):
     def __init__(self):
@@ -17,7 +18,7 @@ class ModelBase(nn.Module):
         self.gpu_ids = opt.gpu_ids
         self.isTrain = opt.isTrain
         self.Tensor = torch.cuda.FloatTensor if self.gpu_ids else torch.Tensor
-        self.save_dir = os.path.join(opt.checkpoint_dir, opt.name)
+        self.save_dir = os.path.join(opt.checkpoints_dir, opt.name)
 
 
     def forward(self):
@@ -25,10 +26,10 @@ class ModelBase(nn.Module):
 
 
     def save_net(self, net, epoch_label, net_name, gpu_ids):
-        save_epoch_dir = epoch_label
-        save_dir = os.path.join(self.save_dir, save_epoch_dir)
-        save_filename = net_name
-        save_path = os.path.join(save_dir, save_filename)
+        save_dir = os.path.join(self.save_dir, epoch_label)
+        utils.mkdirs(save_dir)
+        save_path = os.path.join(save_dir, net_name+".pth")
+
         torch.save(net.cpu().state_dict(), save_path)
         if len(gpu_ids) and torch.cuda.is_available():
             net.cuda()

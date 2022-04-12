@@ -3,21 +3,7 @@ from torch import nn
 import torch.nn.functional as F
 from torch.autograd import Variable
 
-class LossBase(nn.Module):
-    def __init__(self):
-        super(LossBase, self).__init__()
-
-
-    def loss(self, input):
-        pass
-
-
-    def __call__(self, input):
-        return self.loss(input)
-
-
-
-class GANLoss(LossBase):
+class GANLoss(nn.Module):
     def __init__(self, gan_mode, real_label=1., fake_label=0., Tensor=torch.FloatTensor, opt=None):
         super(GANLoss, self).__init__()
 
@@ -92,20 +78,21 @@ class GANLoss(LossBase):
 
 
 
-class IDLoss(LossBase):
+class IDLoss(nn.Module):
     def __init__(self):
         super(IDLoss, self).__init__()
 
-        self.sim = nn.CosineSimilarity()
+        self.sim = nn.CosineSimilarity(dim=1)
 
     def forward(self, x, y):
-        x = self.sim(x,y)
-        x = 1 - x
-        return x
+        sim = self.sim(x,y)
+        loss = 1 - sim
+        loss = loss.sum()
+        return loss
 
 
 
-class GPLoss(LossBase):
+class GPLoss(nn.Module):
     def __init__(self):
         super(GPLoss, self).__init__()
 
@@ -134,7 +121,7 @@ class GPLoss(LossBase):
     
     
     
-class WFMLoss(LossBase):
+class WFMLoss(nn.Module):
     def __init__(self, num_layers, num_D):
         super(WFMLoss, self).__init__()
 
@@ -148,7 +135,7 @@ class WFMLoss(LossBase):
         for (feat_D_real, feat_D_fake) in zip(*feat):
             for (feat_layer_real, feat_layer_fake) in zip(feat_D_real, feat_D_fake):
                 loss += self.diff(feat_layer_real, feat_layer_fake)
-        loss = self.feat_weight * self.D_weight
+        loss = self.feat_weight * self.D_weight * loss
 
         return loss
 

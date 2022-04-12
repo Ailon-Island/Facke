@@ -8,7 +8,7 @@ class TrainOptions(BaseOptions):
     def initialize(self):
         BaseOptions.initialize(self)
         # for displays
-        self.parser.add_argument('--display_freq', type=int, default=99, help='frequency of showing training results on screen')
+        self.parser.add_argument('--display_freq', type=int, default=100, help='frequency of showing training results on screen')
         self.parser.add_argument('--print_freq', type=int, default=100, help='frequency of showing training results on console')
         self.parser.add_argument('--save_latest_freq', type=int, default=10000, help='frequency of saving the latest results')
         self.parser.add_argument('--save_epoch_freq', type=int, default=10000, help='frequency of saving checkpoints at the end of epochs')
@@ -16,9 +16,11 @@ class TrainOptions(BaseOptions):
         self.parser.add_argument('--debug', action='store_true', help='only do one epoch and displays at each iteration')
 
         # for training
+        self.parser.add_argument("--Arc_path", type=str, default='utils/Arcface/arcface_checkpoint.tar', help="run ONNX model via TRT")
         self.parser.add_argument('--continue_train', action='store_true', help='continue training: load the latest model')
         self.parser.add_argument('--load_pretrain', type=str, default='', help='load the pretrained model from the specified location')
-        self.parser.add_argument('--which_epoch', type=str, default='latest', help='which epoch to load? set to latest to use latest cached model')
+        self.parser.add_argument('--n_epochs', type=int, default=520, help='the epochs to train')
+        self.parser.add_argument('--epoch_label', type=str, default='latest', help='which epoch to load? set to latest to use latest cached model')
         self.parser.add_argument('--phase', type=str, default='train', help='train, val, test, etc')
         self.parser.add_argument('--niter', type=int, default=10000, help='# of iter at starting learning rate')
         self.parser.add_argument('--niter_decay', type=int, default=10000, help='# of iter to linearly decay learning rate to zero')
@@ -29,7 +31,7 @@ class TrainOptions(BaseOptions):
         self.parser.add_argument('--num_D', type=int, default=2, help='number of discriminators to use')
         self.parser.add_argument('--n_layers_D', type=int, default=4, help='only used if which_model_netD==n_layers')
         self.parser.add_argument('--ndf', type=int, default=64, help='# of discrim filters in first conv layer')    
-        self.parser.add_argument('--lambda_feat', type=float, default=10.0, help='weight for feature matching loss')
+        self.parser.add_argument('--lambda_wFM', type=float, default=10.0, help='weight for feature matching loss')
         self.parser.add_argument('--lambda_id', type=float, default=20.0, help='weight for id loss')
         self.parser.add_argument('--lambda_rec', type=float, default=10.0, help='weight for reconstruction loss')
         self.parser.add_argument('--lambda_GP', type=float, default=10.0, help='weight for gradient penalty loss')

@@ -6,15 +6,14 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 from utils import loss
-from utils import IDExtract
+from utils.IDExtract import IDExtractor
 from . import networks
 from ..model_base import ModelBase
 
-class GAN(ModelBase):
-    def __init__(self):
-        super(GAN, self).__init__()
 
-        self.ID_extract = IDExtract()
+class SimSwapGAN(ModelBase):
+    def __init__(self):
+        super(SimSwapGAN, self).__init__()
 
 
     def init(self, opt):
@@ -35,6 +34,7 @@ class GAN(ModelBase):
         self.netArc = netArc_checkpoint['model'].module
         self.netArc = self.netArc.to(device)
         self.netArc.eval()
+        self.ID_extract = IDExtractor(self.netArc)
 
         ############### if not training, only Generator needed ###############
         if not self.isTrain:
@@ -67,37 +67,44 @@ class GAN(ModelBase):
             self.load_net(self.D2, opt.epoch_label, 'D2', pretrained_path)
 
         # loss functions
+        self.loss_names = ['D_real', 'D_fake', 'D_GP', 'G_GAN', 'G_wFM', 'G_ID', 'G_rec']
         self.IDloss = loss.IDLoss()
         self.Recloss = nn.L1Loss()
-        self.GANloss = loss.GANLoss(opt.gan_mode, tensor=self.Tensor, opt=opt)
+        self.GANloss = loss.GANLoss(opt.gan_mode, Tensor=self.Tensor, opt=opt)
         self.GPloss = loss.GPLoss()
-        self.wFMloss = loss.WFMLoss()
+        self.wFMloss = loss.WFMLoss(opt.n_layers_D, opt.num_D)
 
         # optimizers
         params = list(self.G.parameters())
-        self.optim_G = torch.optim.Adam(params, lr=opt.lr, beta=(opt.beta1, 0.999))
+        self.optim_G = torch.optim.Adam(params, lr=opt.lr, betas=(opt.beta1, 0.999))
 
-        params = list(self.D1.parameters() + self.D2.parameters())
-        self.optim_D = torch.optim.Adam(params, lr=opt.lr, beta=(opt.beta1, 0.999))
+        params = list(self.D1.parameters()) + list(self.D2.parameters())
+        self.optim_D = torch.optim.Adam(params, lr=opt.lr, betas=(opt.beta1, 0.999))
 
 
 
-    def forward(self, img_id, img_real, latent_ID, latent_ID_real):
+    def forward(self, img_source, img_target):
+        # get latent ID
+        latent_ID = self.ID_extract(img_source)
+        latent_ID_target = self.ID_extract(img_target)
+        latent_ID = F.normalize(latent_ID, dim=-1)
+        # latent_ID_target = F.normalize(latent_ID_target, dim=-1)
+
         # loss initialization
         loss_D_real, loss_D_fake, loss_D_GP = 0, 0, 0
-        loss_G_GAN, loss_G_GAN_feat, loss_G_ID, loss_G_rec = 0, 0, 0, 0
+        loss_G_GAN, loss_G_wFM, loss_G_ID, loss_G_rec =  0, 0, 0, 0
 
         # generate fake image
-        img_fake = self.netG.forward(img_real, latent_ID)
+        img_fake = self.G.forward(img_target, latent_ID)
         if not self.isTrain:
             return img_fake
 
         img_fake_down = self.downsample(img_fake)
-        img_real_down = self.downsample(img_real)
+        img_target_down = self.downsample(img_target)
 
         # D real
-        feat_D1_real = self.D1.forward(img_real.detach())
-        feat_D2_real = self.D2.forward(img_real_down.detach())
+        feat_D1_real = self.D1.forward(img_target.detach())
+        feat_D2_real = self.D2.forward(img_target_down.detach())
         pred_D_real = [feat_D1_real, feat_D2_real]
         loss_D_real = self.GANloss(pred_D_real, is_real=False, forD=True)
 
@@ -108,16 +115,16 @@ class GAN(ModelBase):
         loss_D_fake = self.GANloss(pred_D_fake, is_real=False, forD=True)
 
         # D GP
-        loss_D_GP = self.GPloss(self.D1, img_real, img_fake)
-        loss_D_GP += self.GPloss(self.D2, img_real_down, img_fake_down)
+        loss_D_GP = self.GPloss(self.D1, img_target, img_fake)
+        loss_D_GP += self.GPloss(self.D2, img_target_down, img_fake_down)
         loss_D_GP *= self.opt.lambda_GP
 
         # G GAN
         loss_G_GAN = self.GANloss(pred_D_fake, is_real=True, forD=False)
 
         # G GAN weak feat match
-        loss_G_GAN_feat = self.wFMloss(pred_D_fake)
-        loss_G_GAN_feat *= self.opt.lambda_wFM
+        loss_G_wFM = self.wFMloss([pred_D_real, pred_D_fake])
+        loss_G_wFM *= self.opt.lambda_wFM
 
         # G ID
         latent_ID_fake = self.ID_extract(img_fake)
@@ -125,10 +132,10 @@ class GAN(ModelBase):
         loss_G_ID *= self.opt.lambda_id
 
         # G reconstruction
-        loss_G_rec = self.Recloss(img_fake, img_real)
+        loss_G_rec = self.Recloss(img_fake, img_target)
         loss_G_rec *= self.opt.lambda_rec
 
-        return [[loss_D_real, loss_D_fake, loss_D_GP, loss_G_GAN, loss_G_GAN_feat, loss_G_ID, loss_G_rec], img_fake]
+        return [[loss_D_real, loss_D_fake, loss_D_GP, loss_G_GAN, loss_G_wFM, loss_G_ID, loss_G_rec], img_fake]
 
 
     def save(self, epoch_label):

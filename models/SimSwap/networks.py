@@ -9,7 +9,7 @@ class AdaIn(nn.Module):
     def __init__(self, latent_size, dim):
         super(AdaIn, self).__init__()
 
-        self.FC = nn.Linear(latent_size, dim * 2) # one for mean and another for var
+        self.linear = nn.Linear(latent_size, dim * 2) # one for mean and another for var
 
 
     def forward(self, x, latent_ID):
@@ -21,9 +21,9 @@ class AdaIn(nn.Module):
 
 
 
-class ID_block(nn.Module):
+class IDBlock(nn.Module):
     def __init__(self, dim, latent_size, padding_mode, activation=nn.ReLU(True)):
-        super(ID_block, self).__init__()
+        super(IDBlock, self).__init__()
         norm = nn.InstanceNorm2d(num_features=dim, eps=1e-8)
         self.conv1 = nn.Sequential(
             nn.ReflectionPad2d(padding=1) if padding_mode == 'reflect' else
@@ -79,12 +79,12 @@ class Generator(nn.Module):
             norm(num_features=128),
             activation
         )
-        self.down1 = nn.Sequential(
+        self.down2 = nn.Sequential(
             nn.Conv2d(in_channels=128, out_channels=256, kernel_size=3, stride=2, padding=1),
             norm(num_features=256),
             activation
         )
-        self.down1 = nn.Sequential(
+        self.down3 = nn.Sequential(
             nn.Conv2d(in_channels=256, out_channels=512, kernel_size=3, stride=2, padding=1),
             norm(num_features=512),
             activation
@@ -93,7 +93,7 @@ class Generator(nn.Module):
         # ID-blocks
         ID_blocks = []
         for i in range(num_ID_blocks):
-            ID_blocks += [ID_block(512, latent_size, padding_mode, activation)]
+            ID_blocks += [IDBlock(512, latent_size, padding_mode, activation)]
         self.ID_blocks = nn.Sequential(*ID_blocks)
 
         upsample = nn.Upsample(scale_factor=2, mode='bilinear')
@@ -123,7 +123,7 @@ class Generator(nn.Module):
             nn.ReplicationPad2d(padding=3) if padding_mode == 'replicate' else
             nn.ZeroPad2d(padding=3),  # padding_mode == 'zero'
             nn.Conv2d(64, out_channels, kernel_size=7),
-            norm(num_features=64),
+            norm(num_features=out_channels),
             nn.Tanh()
         )
 
@@ -135,7 +135,8 @@ class Generator(nn.Module):
         x = self.down2(x)
         x = self.down3(x)
 
-        x = self.ID_blocks(x, latent_id)
+        for ID_block in self.ID_blocks:
+            x = ID_block(x, latent_id)
 
         x = self.up1(x)
         x = self.up2(x)
