@@ -5,3 +5,4 @@ utils/Arcface/arcface_checkpoint.tar
 utils/Arcface/arcface_checkpoint.tar
 utils/insightface_func/models/antelope/glintr100.onnx
 datasets/*
+*.patch
