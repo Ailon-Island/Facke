@@ -39,10 +39,8 @@ class ModelBase(nn.Module):
         if not save_dir:
             save_dir = self.save_dir
 
-        save_epoch_dir = epoch_label
-        save_dir = os.path.join(save_dir, save_epoch_dir)
-        save_filename = net_name
-        save_path = os.path.join(save_dir, save_filename)
+        save_dir = os.path.join(save_dir, epoch_label)
+        save_path = os.path.join(save_dir, net_name+'.pth')
 
         if not os.path.isfile(save_path):
             print('{} does not exist!'.format(save_path))

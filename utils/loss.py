@@ -47,10 +47,10 @@ class GANLoss(nn.Module):
         elif self.gan_mode == 'hinge':
             if forD:
                 if is_real:
-                    min = torch.min(input - 1, self.get_zero_tensor(input))
+                    minval = torch.min(input - 1, self.get_zero_tensor(input))
                 else:
-                    min = torch.min(- input - 1, self.get_zero_tensor(input))
-                loss = -torch.mean(min)
+                    minval = torch.min(- input - 1, self.get_zero_tensor(input))
+                loss = -torch.mean(minval)
             else: # wgan
                 if is_real:
                     loss = -input.mean()

@@ -49,9 +49,10 @@ class VGGFace2HQDataset(DatasetBase):
 class ComposedLoader:
     def __init__(self, loader1, loader2):
         super(ComposedLoader, self).__init__()
-
+        self.loaders = [loader1, loader2]
         self.iters = [iter(loader1), iter(loader2)]
-        self.iter = 0
+        self.current_iter_id = 1
+        self.batch_size = self.loaders[0].batch_size
 
 
     def __iter__(self):
@@ -59,8 +60,10 @@ class ComposedLoader:
 
 
     def __next__(self):
-        nex = self.iters[self.iter] = next(self.iters[self.iter])
+        self.current_iter_id = 1 - self.current_iter_id
 
-        self.iter = 1 - self.iter
+        return next(self.iters[self.current_iter_id])
 
-        return nex
+
+    def __len__(self):
+        return len(self.loaders[0]) + len(self.loaders[1])

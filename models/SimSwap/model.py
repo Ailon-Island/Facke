@@ -17,6 +17,8 @@ class SimSwapGAN(ModelBase):
 
 
     def init(self, opt):
+        if opt.verbose:
+            print("Initializing SimSwap model...")
         ModelBase.init(self, opt)
 
         self.isTrain = opt.isTrain
@@ -35,6 +37,7 @@ class SimSwapGAN(ModelBase):
         self.netArc = self.netArc.to(device)
         self.netArc.eval()
         self.ID_extract = IDExtractor(self.netArc)
+        self.ID_extract.eval()
 
         ############### if not training, only Generator needed ###############
         if not self.isTrain:
@@ -81,6 +84,9 @@ class SimSwapGAN(ModelBase):
         params = list(self.D1.parameters()) + list(self.D2.parameters())
         self.optim_D = torch.optim.Adam(params, lr=opt.lr, betas=(opt.beta1, 0.999))
 
+        if opt.verbose:
+            print("SimSwap model initiated.")
+
 
 
     def forward(self, img_source, img_target):
@@ -106,12 +112,14 @@ class SimSwapGAN(ModelBase):
         feat_D1_real = self.D1.forward(img_target.detach())
         feat_D2_real = self.D2.forward(img_target_down.detach())
         pred_D_real = [feat_D1_real, feat_D2_real]
+
         loss_D_real = self.GANloss(pred_D_real, is_real=False, forD=True)
 
         # D fake
         feat_D1_fake = self.D1.forward(img_fake.detach())
         feat_D2_fake = self.D2.forward(img_fake_down.detach())
         pred_D_fake = [feat_D1_fake, feat_D2_fake]
+
         loss_D_fake = self.GANloss(pred_D_fake, is_real=False, forD=True)
 
         # D GP
@@ -128,6 +136,7 @@ class SimSwapGAN(ModelBase):
 
         # G ID
         latent_ID_fake = self.ID_extract(img_fake)
+
         loss_G_ID = self.IDloss(latent_ID_fake, latent_ID)
         loss_G_ID *= self.opt.lambda_id
 
@@ -139,6 +148,12 @@ class SimSwapGAN(ModelBase):
 
 
     def save(self, epoch_label):
+        self.save_net(self.G,  'G', epoch_label,self.gpu_ids)
+        self.save_net(self.D1, 'D1', epoch_label, self.gpu_ids)
+        self.save_net(self.D2, 'D2', epoch_label, self.gpu_ids)
+
+
+    def load(self, epoch_label):
         self.save_net(self.G, 'G', epoch_label, self.gpu_ids)
         self.save_net(self.D1, 'D1', epoch_label, self.gpu_ids)
         self.save_net(self.D2, 'D2', epoch_label, self.gpu_ids)
