@@ -11,6 +11,7 @@ from data.VGGface2HQ import VGGFace2HQDataset, ComposedLoader
 import time
 import matplotlib.pyplot as plt
 import warnings
+from utils.loss import IDLoss
 
 warnings.filterwarnings("ignore")
 torch.autograd.set_detect_anomaly(True)
@@ -29,46 +30,54 @@ class Trainer:
         self.memory_first = None
 
 
-    def train_one_batch(self, img_source, img_target, is_same_ID):
+    def train_one_batch(self, img_source, img_target, latent_ID, latent_ID_target, is_same_ID):
         img_source, img_target = img_source.detach().to('cuda'), img_target.detach().to('cuda')
+        latent_ID, latent_ID_target = latent_ID.detach().to('cuda'), latent_ID_target.detach().to('cuda')
 
         ########### FORWARD ###########
-        [losses, _] = model(img_source, img_target)
+        [losses, _] = model(img_source, img_target, latent_ID, latent_ID_target)
+
+        ############ LOSSES ############
+        loss_dict = dict(zip(model.module.loss_names, losses))
+
+        # calculate final loss scalar
+        loss_D = (loss_dict['D_fake'] + loss_dict['D_real']) * 0.5 + loss_dict['D_GP']
+        loss_G = loss_dict['G_GAN'] + loss_dict.get('G_VGG', 0) + loss_dict.get('G_wFM', 0) + loss_dict['G_ID'] + loss_dict['G_rec'] * is_same_ID
+        # loss_G, loss_D = 0, 0
+        # for idx, (loss_name, loss) in enumerate(zip(self.model.module.loss_names, losses)):
+        #     if loss_name == 'G_rec' and not is_same_ID:  # G_rec only makes sense for images from the same identity
+        #         continue
+        #
+        #     if loss_name[0] == 'G':
+        #         loss_G = loss_G + loss
+        #     else:
+        #         loss_D = loss_D + loss
 
         ####### BACKPROPAGATION #######
-        loss_G, loss_D = 0, 0
-        for idx, (loss_name, loss) in enumerate(zip(self.model.module.loss_names, losses)):
-            if loss_name == 'G_rec' and not is_same_ID:  # G_rec only makes sense for images from the same identity
-                continue
-
-            if loss_name[0] == 'G':
-                loss_G = loss_G + loss
-            else:
-                loss_D = loss_D + loss
-        self.losses += [[loss.detach().cpu().item() for loss in losses]]
-
         self.model.module.optim_G.zero_grad()
-        loss_G.backward(retain_graph=True)
+        loss_G.backward()
         self.model.module.optim_G.step()
         self.model.module.optim_D.zero_grad()
-        loss_D.backward(retain_graph=False)
+        loss_D.backward()
         self.model.module.optim_D.step()
+
+        self.losses += [[loss.detach().cpu().item() for loss in losses]]
 
         for i in range(len(losses)):
             del losses[0]
-        del loss_G, loss_D, loss
+        del loss_G, loss_D
         del img_source, img_target
 
 
     def train(self, epoch_idx):
         self.niter_start_time = time.time()
 
-        for batch_idx, ((img_source, img_target), is_same_ID) in enumerate(self.loader):
+        for batch_idx, ((img_source, img_target), (latent_ID, latent_ID_target), is_same_ID) in enumerate(self.loader):
             is_same_ID = is_same_ID[0].detach().item()
 
-            self.train_one_batch(img_source, img_target, is_same_ID)
+            self.train_one_batch(img_source, img_target, latent_ID, latent_ID_target, is_same_ID)
 
-            self.iter_cnt += 1
+            self.iter_cnt += self.opt.batchSize
 
             # self.train_half(model, img_source_diff_ID, img_target_diff_ID, is_same_ID=False)
 
@@ -94,7 +103,7 @@ class Trainer:
             self.print(self.model.module.loss_names, epoch_idx, is_same_ID)
 
             # memory log
-            if opt.verbose:
+            if opt.memory_check:
                 if self.memory_first is None:
                     self.memory_first = torch.cuda.memory_allocated()
                 print("Memory increase: {}MiB".format((torch.cuda.memory_allocated() - self.memory_last) / 1024. / 1024.))
@@ -135,9 +144,9 @@ class Trainer:
         # print()
 
         # diff_ID
-        print("[epoch:\t{}\titers:\t{}\tsame ID:\t{}\ttime:\t{}]".format(epoch_idx, self.iter_cnt, is_same_ID, niter_time), end='')
+        print("[epoch:\t{}\titers:\t{}\tsame ID:\t{}\ttime:\t{:.3f}]".format(epoch_idx, self.iter_cnt, is_same_ID, niter_time), end='')
         for (loss_name, loss) in zip(loss_names, self.losses[-1]):
-            print("\t{}:\t{}".format(loss_name, loss), end='')
+            print("\t{}:\t{:.3f}".format(loss_name, loss), end='')
         print()
 
 
@@ -165,15 +174,12 @@ if __name__ == '__main__':
         from torch.cuda.amp import autocast
 
     print("Generating data loaders...")
-    train_data_same_ID = VGGFace2HQDataset(isTrain=True, data_dir=opt.dataroot, transform=transformer_Arcface, is_same_ID=True)
-    train_data_diff_ID = VGGFace2HQDataset(isTrain=True, data_dir=opt.dataroot, transform=transformer_Arcface, is_same_ID=False)
-    train_loader_same_ID = DataLoader(dataset=train_data_same_ID, batch_size=opt.batchSize, shuffle=True, num_workers=8)
-    train_loader_diff_ID = DataLoader(dataset=train_data_diff_ID, batch_size=opt.batchSize, shuffle=True, num_workers=8)
-    train_loader = ComposedLoader(train_loader_same_ID, train_loader_diff_ID)
-    test_data = VGGFace2HQDataset(isTrain=False, data_dir=opt.dataroot, transform=transformer_Arcface, is_same_ID=True)
-    test_data = VGGFace2HQDataset(isTrain=False, data_dir=opt.dataroot, transform=transformer_Arcface, is_same_ID=False)
-    test_loader = DataLoader(dataset=test_data, batch_size=opt.batchSize, shuffle=True, num_workers=8)
-    print("Datasets ready.")
+    train_data = VGGFace2HQDataset(opt, isTrain=True, transform=transformer_Arcface, is_same_ID=True, auto_same_ID=True)
+    train_loader = DataLoader(dataset=train_data, batch_size=opt.batchSize, shuffle=True, num_workers=1)
+    # test_data = VGGFace2HQDataset(opt, isTrain=False, transform=transformer_Arcface, is_same_ID=True)
+    # test_data = VGGFace2HQDataset(opt, isTrain=False, transform=transformer_Arcface, is_same_ID=False)
+    # test_loader = DataLoader(dataset=test_data, batch_size=opt.batchSize, shuffle=True, num_workers=8)
+    print("Dataloaders ready.")
 
     start_epoch, num_epochs = 1, opt.n_epochs
 

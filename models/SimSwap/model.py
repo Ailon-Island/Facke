@@ -31,12 +31,7 @@ class SimSwapGAN(ModelBase):
         self.G = self.G.to(device)
 
         # ID network
-        netArc_checkpoint = opt.Arc_path
-        netArc_checkpoint = torch.load(netArc_checkpoint)
-        self.netArc = netArc_checkpoint['model'].module
-        self.netArc = self.netArc.to(device)
-        self.netArc.eval()
-        self.ID_extract = IDExtractor(self.netArc)
+        self.ID_extract = IDExtractor(self.opt)
         self.ID_extract.eval()
 
         ############### if not training, only Generator needed ###############
@@ -89,31 +84,20 @@ class SimSwapGAN(ModelBase):
 
 
 
-    def forward(self, img_source, img_target):
-        # get latent ID
-        latent_ID = self.ID_extract(img_source)
-        latent_ID_target = self.ID_extract(img_target)
-        latent_ID = F.normalize(latent_ID, dim=-1)
-        # latent_ID_target = F.normalize(latent_ID_target, dim=-1)
-
+    def forward(self, img_source, img_target, latent_ID, latent_ID_target):
         # loss initialization
         loss_D_real, loss_D_fake, loss_D_GP = 0, 0, 0
         loss_G_GAN, loss_G_wFM, loss_G_ID, loss_G_rec =  0, 0, 0, 0
 
         # generate fake image
-        img_fake = self.G.forward(img_target, latent_ID)
+        img_fake = self.G.forward(img_target, latent_ID.detach())
         if not self.isTrain:
             return img_fake
 
+        img_fake = self.ID_extract.INnorm(img_fake)
+
         img_fake_down = self.downsample(img_fake)
         img_target_down = self.downsample(img_target)
-
-        # D real
-        feat_D1_real = self.D1.forward(img_target.detach())
-        feat_D2_real = self.D2.forward(img_target_down.detach())
-        pred_D_real = [feat_D1_real, feat_D2_real]
-
-        loss_D_real = self.GANloss(pred_D_real, is_real=False, forD=True)
 
         # D fake
         feat_D1_fake = self.D1.forward(img_fake.detach())
@@ -122,16 +106,29 @@ class SimSwapGAN(ModelBase):
 
         loss_D_fake = self.GANloss(pred_D_fake, is_real=False, forD=True)
 
+        # D real (target)
+        feat_D1_real = self.D1.forward(img_target)
+        feat_D2_real = self.D2.forward(img_target_down.detach())
+        pred_D_real = [feat_D1_real, feat_D2_real]
+        feat_D_real = [feat_D1_real, feat_D2_real]
+
+        loss_D_real = self.GANloss(pred_D_real, is_real=True, forD=True)
+
         # D GP
-        loss_D_GP = self.GPloss(self.D1, img_target, img_fake)
-        loss_D_GP += self.GPloss(self.D2, img_target_down, img_fake_down)
+        loss_D_GP = self.GPloss(self.D1, img_target, img_fake.detach())
+        loss_D_GP += self.GPloss(self.D2, img_target_down, img_fake_down.detach())
         loss_D_GP *= self.opt.lambda_GP
 
         # G GAN
+        feat_D1_fake = self.D1.forward(img_fake)
+        feat_D2_fake = self.D2.forward(img_fake_down)
+        pred_D_fake = [feat_D1_fake, feat_D2_fake]
+        feat_D_fake = [feat_D1_fake, feat_D2_fake]
+
         loss_G_GAN = self.GANloss(pred_D_fake, is_real=True, forD=False)
 
         # G GAN weak feat match
-        loss_G_wFM = self.wFMloss([pred_D_real, pred_D_fake])
+        loss_G_wFM = self.wFMloss([feat_D_real, feat_D_fake])
         loss_G_wFM *= self.opt.lambda_wFM
 
         # G ID
@@ -145,6 +142,7 @@ class SimSwapGAN(ModelBase):
         loss_G_rec *= self.opt.lambda_rec
 
         return [[loss_D_real, loss_D_fake, loss_D_GP, loss_G_GAN, loss_G_wFM, loss_G_ID, loss_G_rec], img_fake]
+        # self.loss_names = ['D_real', 'D_fake', 'D_GP', 'G_GAN', 'G_wFM', 'G_ID', 'G_rec']
 
 
     def save(self, epoch_label):

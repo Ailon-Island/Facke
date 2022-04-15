@@ -65,7 +65,7 @@ class BaseOptions():
         self.parser.add_argument('--n_downsample_E', type=int, default=4, help='# of downsampling layers in encoder') 
         self.parser.add_argument('--nef', type=int, default=16, help='# of encoder filters in the first conv layer')        
         self.parser.add_argument('--n_clusters', type=int, default=10, help='number of clusters for features')
-        self.parser.add_argument('--image_size', type=int, default=192, help='number of clusters for features')
+        self.parser.add_argument('--image_size', type=int, default=224, help='number of clusters for features')
         self.parser.add_argument('--norm_G', type=str, default='spectralspadesyncbatch3x3', help='instance normalization or batch normalization')
         self.parser.add_argument('--semantic_nc', type=int, default=3, help='number of clusters for features')
         self.initialized = True

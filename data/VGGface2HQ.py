@@ -1,18 +1,32 @@
 import os
+import numpy as np
+import torch
+import torch.nn.functional as F
 from .dataset_base import DatasetBase
-from torchvision import datasets
+from torchvision import datasets, transforms
 import random
+from utils import utils
+from utils.IDExtract import IDExtractor
 
 class VGGFace2HQDataset(DatasetBase):
-    def __init__(self, isTrain=True, data_dir='datasets\\VGGface2_HQ', is_same_ID=True, transform=None):
+    def __init__(self, opt, isTrain=True, transform=None, is_same_ID=True, auto_same_ID=True, random_in_ID=True, force_new_latents=False):  #isTrain=True, data_dir='datasets\\VGGface2_HQ', is_same_ID=True, transform=None):
+        self.opt = opt
         set = 'train' if isTrain else 'test'
-        self.img_dir = os.path.join(data_dir, set)
+        self.data_dir = os.path.join(opt.dataroot, set)
+        img_dir = os.path.join(self.data_dir, 'images')
+        self.dataset = datasets.ImageFolder(img_dir)
+        self.batch_size = opt.batchSize
         self.transform = transform
-        self.dataset = datasets.ImageFolder(self.img_dir)
         self.is_same_ID = is_same_ID
+        self.auto_same_ID = auto_same_ID
+        self.random_in_ID = random_in_ID
+        self.force_new_latents = force_new_latents
+        self.sample_cnt = 0
         self.label_ranges = [len(self.dataset.imgs)] * (len(self.dataset.classes) + 1)
         for i, target in enumerate(self.dataset.targets):
             self.label_ranges[target] = min(self.label_ranges[target], i)
+        self.ID_extract = None
+
 
     def toggle_is_same_ID(self):
         self.is_same_ID = not self.is_same_ID
@@ -23,26 +37,76 @@ class VGGFace2HQDataset(DatasetBase):
 
 
     def __getitem__(self, idx_source):
+        # get source image
         img_source = self.dataset[idx_source][0]
 
+        # get index of target image
+        same_outputs = False
         label_source = self.dataset.targets[idx_source]
         if self.is_same_ID:
             # pick target image from the same ID
-            idx_target = random.randint(self.label_ranges[label_source], self.label_ranges[label_source + 1] - 2)
-            idx_target = idx_target + 1 if idx_target >= idx_source else idx_target
+            if self.random_in_ID:
+                idx_target = random.randint(self.label_ranges[label_source], self.label_ranges[label_source + 1] - 2)
+                idx_target = idx_target + 1 if idx_target >= idx_source else idx_target
+            else:
+                same_outputs = True
         else:
             # pick target image from a different ID
             label_target = random.randint(0, len(self.dataset.classes) - 2)
             label_target = label_target + 1 if label_target >= label_source else label_target
             idx_target = random.randint(self.label_ranges[label_target], self.label_ranges[label_target + 1] - 1)
 
-        img_target = self.dataset[idx_target][0]
-
+        # process source image
+        latent_id_source = self.get_latent(idx_source)
         if self.transform is not None:
             img_source = self.transform(img_source)
-            img_target = self.transform(img_target)
 
-        return (img_source, img_target), self.is_same_ID
+        # get and process target image
+        if same_outputs:
+            img_target = img_source
+            latent_id_target = latent_id_source
+        else:
+            img_target = self.dataset[idx_target][0]
+            latent_id_target = self.get_latent(idx_target)
+            if self.transform is not None:
+                img_target = self.transform(img_target)
+
+        # toggle the same ID flag
+        if self.auto_same_ID:
+            self.sample_cnt += 1;
+            if self.sample_cnt == self.batch_size:
+                self.toggle_is_same_ID()
+                self.sample_cnt = 0
+
+        return (img_source, img_target), (latent_id_source, latent_id_target), self.is_same_ID
+
+
+    def get_latent(self, idx):
+        img, label = self.dataset[idx]
+        latent_ID_dir = os.path.join(self.data_dir, 'latent-ID')
+        utils.mkdirs(latent_ID_dir)
+        class_name = self.dataset.classes[label]
+        save_class_dir = os.path.join(latent_ID_dir, class_name)
+        utils.mkdirs(save_class_dir)
+        save_pth = os.path.join(save_class_dir, str(idx)+'.npy')
+
+        if not os.path.exists(save_pth) or self.force_new_latents:
+            if self.ID_extract is None:
+                self.ID_extract = IDExtractor(self.opt)
+                self.ID_extract.eval()
+            with torch.no_grad():
+                img = transforms.ToTensor()(img)
+                img = img.view(-1, img.shape[0], img.shape[1], img.shape[2])
+                img = img.to('cuda')
+                latent_ID = self.ID_extract(img).cpu().numpy()
+                latent_ID = latent_ID.reshape(-1)
+                np.save(save_pth, latent_ID)
+
+        latent_ID = np.load(save_pth)
+        #latent_ID = latent_ID / np.linalg.norm(latent_ID)
+        latent_ID = torch.from_numpy(latent_ID)
+
+        return latent_ID
 
 
 

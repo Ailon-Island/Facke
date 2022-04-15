@@ -16,6 +16,7 @@ class TrainOptions(BaseOptions):
         self.parser.add_argument('--debug', action='store_true', help='only do one epoch and displays at each iteration')
 
         # for training
+        self.parser.add_argument("--memory_check", action='store_true', default=False, help='check for unexpected memory increase batch by batch')
         self.parser.add_argument("--Arc_path", type=str, default='utils/Arcface/arcface_checkpoint.tar', help="run ONNX model via TRT")
         self.parser.add_argument('--continue_train', action='store_true', help='continue training: load the latest model')
         self.parser.add_argument('--load_pretrain', type=str, default='', help='load the pretrained model from the specified location')
