@@ -9,7 +9,7 @@ from utils import utils
 from utils.IDExtract import IDExtractor
 
 class VGGFace2HQDataset(DatasetBase):
-    def __init__(self, opt, isTrain=True, transform=None, is_same_ID=True, auto_same_ID=True, random_in_ID=True, force_new_latents=False):  #isTrain=True, data_dir='datasets\\VGGface2_HQ', is_same_ID=True, transform=None):
+    def __init__(self, opt, isTrain=True, transform=None, is_same_ID=True, auto_same_ID=True, random_in_ID=True):  #isTrain=True, data_dir='datasets\\VGGface2_HQ', is_same_ID=True, transform=None):
         self.opt = opt
         set = 'train' if isTrain else 'test'
         self.data_dir = os.path.join(opt.dataroot, set)
@@ -20,7 +20,6 @@ class VGGFace2HQDataset(DatasetBase):
         self.is_same_ID = is_same_ID
         self.auto_same_ID = auto_same_ID
         self.random_in_ID = random_in_ID
-        self.force_new_latents = force_new_latents
         self.sample_cnt = 0
         self.label_ranges = [len(self.dataset.imgs)] * (len(self.dataset.classes) + 1)
         for i, target in enumerate(self.dataset.targets):
@@ -90,23 +89,30 @@ class VGGFace2HQDataset(DatasetBase):
         utils.mkdirs(save_class_dir)
         save_pth = os.path.join(save_class_dir, str(idx)+'.npy')
 
-        if not os.path.exists(save_pth) or self.force_new_latents:
-            if self.ID_extract is None:
-                self.ID_extract = IDExtractor(self.opt)
-                self.ID_extract.eval()
-            with torch.no_grad():
-                img = transforms.ToTensor()(img)
-                img = img.view(-1, img.shape[0], img.shape[1], img.shape[2])
-                img = img.to('cuda')
-                latent_ID = self.ID_extract(img).cpu().numpy()
-                latent_ID = latent_ID.reshape(-1)
-                np.save(save_pth, latent_ID)
+        if not os.path.exists(save_pth):
+            self.generate_latent(img, save_pth)
 
         latent_ID = np.load(save_pth)
+        if (latent_ID.shape != (512,)):
+            print(latent_ID.shape)
+            self.generate_latent(img, save_pth)
         #latent_ID = latent_ID / np.linalg.norm(latent_ID)
         latent_ID = torch.from_numpy(latent_ID)
 
         return latent_ID
+
+
+    def generate_latent(self, img, save_pth):
+        if self.ID_extract is None:
+            self.ID_extract = IDExtractor(self.opt)
+            self.ID_extract.eval()
+        with torch.no_grad():
+            img = transforms.ToTensor()(img)
+            img = img.view(-1, img.shape[0], img.shape[1], img.shape[2])
+            img = img.to('cuda')
+            latent_ID = self.ID_extract(img).cpu().numpy()
+            latent_ID = latent_ID.reshape(-1)
+            np.save(save_pth, latent_ID)
 
 
 
