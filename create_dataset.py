@@ -38,14 +38,18 @@ if __name__ == '__main__':
 
     train_size = len(train_data)
     print('Creating latents for train set...')
-    for idx,_ in enumerate(train_loader, start=1):
-        print('Generated {}/{}({:.3%})'.format(idx, train_size, 1. * idx / train_size))
+    cnt = 0
+    for _ in enumerate(train_loader, start=1):
+        cnt += opt.batchSize
+        print('Generated {}/{}({:.3%})'.format(cnt, train_size, 1. * cnt / train_size))
     print('Train set successfully constructed.')
 
     test_size = len(test_data)
     print('Creating latents for test...')
-    for idx,_ in enumerate(test_loader, start=1):
-        print('Generated {}/{}({.3%})'.format(idx, test_size, 1. * idx / test_size))
+    cnt = 0
+    for _ in enumerate(test_loader, start=1):
+        cnt += opt.batchSize
+        print('Generated {}/{}({.3%})'.format(cnt, test_size, 1. * cnt / test_size))
     print('Test set successfully constructed.')
 
 
