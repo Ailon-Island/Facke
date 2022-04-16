@@ -36,20 +36,20 @@ if __name__ == '__main__':
 
     torch.nn.Module.dump_patches = True
 
-    train_size = len(train_data)
-    print('Creating latents for train set...')
-    cnt = 0
-    for _ in enumerate(train_loader, start=1):
-        cnt += opt.batchSize
-        print('Generated {}/{} ({:.3%})'.format(cnt, train_size, 1. * cnt / train_size))
-    print('Train set successfully constructed.')
+    # train_size = len(train_data)
+    # print('Creating latents for train set...')
+    # cnt = 0
+    # for _ in enumerate(train_loader, start=1):
+    #     cnt += opt.batchSize
+    #     print('Generated {}/{} ({:.3%})'.format(cnt, train_size, 1. * cnt / train_size))
+    # print('Train set successfully constructed.')
 
     test_size = len(test_data)
     print('Creating latents for test...')
     cnt = 0
     for _ in enumerate(test_loader, start=1):
         cnt += opt.batchSize
-        print('Generated {}/{} ({.3%})'.format(cnt, test_size, 1. * cnt / test_size))
+        print('Generated {}/{} ({:.3%})'.format(cnt, test_size, 1. * cnt / test_size))
     print('Test set successfully constructed.')
 
 

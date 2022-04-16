@@ -41,7 +41,7 @@ class Trainer:
         loss_dict = dict(zip(model.module.loss_names, losses))
 
         # calculate final loss scalar
-        loss_D = (loss_dict['D_fake'] + loss_dict['D_real']) * 0.5 + loss_dict['D_GP']
+        loss_D = (loss_dict['D_fake'] + loss_dict['D_real']) + loss_dict['D_GP']
         loss_G = loss_dict['G_GAN'] + loss_dict.get('G_VGG', 0) + loss_dict.get('G_wFM', 0) + loss_dict['G_ID'] + loss_dict['G_rec'] * is_same_ID
         # loss_G, loss_D = 0, 0
         # for idx, (loss_name, loss) in enumerate(zip(self.model.module.loss_names, losses)):
@@ -73,6 +73,8 @@ class Trainer:
         self.niter_start_time = time.time()
 
         for batch_idx, ((img_source, img_target), (latent_ID, latent_ID_target), is_same_ID) in enumerate(self.loader):
+            self.niter_start_time = time.time()
+            
             is_same_ID = is_same_ID[0].detach().item()
 
             self.train_one_batch(img_source, img_target, latent_ID, latent_ID_target, is_same_ID)
@@ -80,6 +82,11 @@ class Trainer:
             self.iter_cnt += self.opt.batchSize
 
             # self.train_half(model, img_source_diff_ID, img_target_diff_ID, is_same_ID=False)
+
+            # display result
+            #if self.iter_cnt % self.opt.display_freq == 0: # two iters per batch
+            self.display(self.model.module.loss_names)
+            self.print(self.model.module.loss_names, epoch_idx, is_same_ID)
 
             # save model
             if (self.iter_cnt % self.opt.save_latest_freq == 0):
@@ -97,10 +104,6 @@ class Trainer:
                 # self.model.module.load('{}_iter'.format(self.iter_cnt))
                 # self.model.train()
 
-            # display result
-            #if self.iter_cnt % self.opt.display_freq == 0: # two iters per batch
-            self.display(self.model.module.loss_names)
-            self.print(self.model.module.loss_names, epoch_idx, is_same_ID)
 
             # memory log
             if opt.memory_check:
@@ -136,7 +139,6 @@ class Trainer:
         # same_ID
         niter_finish_time = time.time()
         niter_time = niter_finish_time - self.niter_start_time
-        self.niter_start_time = niter_finish_time
 
         # print("[epoch:\t{}\titers:\t{}:\t{}\tID:\tsame]\t\t".format(epoch_idx, self.iter_cnt - 1, niter_time), end='')
         # for (loss_name, loss) in zip(loss_names, self.losses[-2]):
