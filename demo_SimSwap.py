@@ -34,8 +34,8 @@ if __name__ == '__main__':
         from torch.cuda.amp import autocast
 
     print("Generating data loaders...")
-    test_data = VGGFace2HQDataset(isTrain=False, data_dir=opt.dataroot, transform=transformer_Arcface, is_same_ID=False)
-    test_loader = DataLoader(dataset=test_data, batch_size=1, shuffle=True, num_workers=8)
+    test_data = VGGFace2HQDataset(opt, isTrain=False,  transform=transformer_Arcface)
+    test_loader = DataLoader(dataset=test_data, batch_size=1, shuffle=True, num_workers=16)
     print("Datasets ready.")
 
     torch.nn.Module.dump_patches = True
@@ -44,9 +44,8 @@ if __name__ == '__main__':
     model.eval()
     with torch.no_grad():
         it = iter(test_loader)
-        (img_source, img_target), _ = next(it)
-        img_source, img_target = img_source.detach().to('cuda'), img_target.detach().to('cuda')
-        img_fake = model(img_source, img_target)
+        (img_source, img_target), (latent_ID, latent_ID_target), _ = next(it)
+        img_fake = model(img_source, img_target, latent_ID, latent_ID_target)
 
         img_source = detransformer_Arcface(img_source)
         img_target = detransformer_Arcface(img_target)

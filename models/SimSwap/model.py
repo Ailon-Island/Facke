@@ -62,9 +62,9 @@ class SimSwapGAN(ModelBase):
         if opt.continue_train or opt.load_pretrain:
             pretrained_path = '' if not self.isTrain else opt.load_pretrain
 
-            self.load_net(self.G, opt.epoch_label, 'G', pretrained_path)
-            self.load_net(self.D1, opt.epoch_label, 'D1', pretrained_path)
-            self.load_net(self.D2, opt.epoch_label, 'D2', pretrained_path)
+            self.load_net(self.G, 'G', opt.epoch_label, pretrained_path)
+            self.load_net(self.D1, 'D1', opt.epoch_label, pretrained_path)
+            self.load_net(self.D2, 'D2', opt.epoch_label, pretrained_path)
 
         # loss functions
         self.loss_names = ['D_real', 'D_fake', 'D_GP', 'G_GAN', 'G_wFM', 'G_ID', 'G_rec']

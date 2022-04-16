@@ -25,22 +25,21 @@ class ModelBase(nn.Module):
         pass
 
 
-    def save_net(self, net, epoch_label, net_name, gpu_ids):
-        save_dir = os.path.join(self.save_dir, epoch_label)
+    def save_net(self, net, net_name, epoch_label, gpu_ids):
+        save_dir = os.path.join(self.save_dir, net_name)
         utils.mkdirs(save_dir)
-        save_path = os.path.join(save_dir, net_name+".pth")
+        save_path = os.path.join(save_dir, epoch_label+".pth")
 
         torch.save(net.cpu().state_dict(), save_path)
         if len(gpu_ids) and torch.cuda.is_available():
             net.cuda()
 
 
-    def load_net(self, net, epoch_label, net_name, save_dir=''):
+    def load_net(self, net, net_name, epoch_label, save_dir=''):
         if not save_dir:
             save_dir = self.save_dir
 
-        save_dir = os.path.join(save_dir, epoch_label)
-        save_path = os.path.join(save_dir, net_name+'.pth')
+        save_path = os.path.join(save_dir, net_name, epoch_label+'.pth')
 
         if not os.path.isfile(save_path):
             print('{} does not exist!'.format(save_path))
