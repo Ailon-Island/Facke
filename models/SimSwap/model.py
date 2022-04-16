@@ -1,5 +1,7 @@
 import  os
 import sys
+import time
+
 root_path = os.path.join("..", "..")
 sys.path.append(root_path)
 import torch
@@ -90,7 +92,7 @@ class SimSwapGAN(ModelBase):
         loss_G_GAN, loss_G_wFM, loss_G_ID, loss_G_rec =  0, 0, 0, 0
 
         # generate fake image
-        img_fake = self.G.forward(img_target, latent_ID.detach())
+        img_fake = self.G.forward(img_target, latent_ID)
         if not self.isTrain:
             return img_fake
 
@@ -100,15 +102,17 @@ class SimSwapGAN(ModelBase):
         img_target_down = self.downsample(img_target)
 
         # D fake
+        #t1 = time.time()
         feat_D1_fake = self.D1.forward(img_fake.detach())
         feat_D2_fake = self.D2.forward(img_fake_down.detach())
         pred_D_fake = [feat_D1_fake, feat_D2_fake]
+        #print(time.time() - t1)
 
         loss_D_fake = self.GANloss(pred_D_fake, is_real=False, forD=True)
 
         # D real (target)
         feat_D1_real = self.D1.forward(img_target)
-        feat_D2_real = self.D2.forward(img_target_down.detach())
+        feat_D2_real = self.D2.forward(img_target_down)
         pred_D_real = [feat_D1_real, feat_D2_real]
         feat_D_real = [feat_D1_real, feat_D2_real]
 

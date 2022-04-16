@@ -71,13 +71,14 @@ class VGGFace2HQDataset(DatasetBase):
                 img_target = self.transform(img_target)
 
         # toggle the same ID flag
+        is_same_ID = self.is_same_ID
         if self.auto_same_ID:
             self.sample_cnt += 1;
             if self.sample_cnt == self.batch_size:
                 self.toggle_is_same_ID()
                 self.sample_cnt = 0
 
-        return (img_source, img_target), (latent_id_source, latent_id_target), self.is_same_ID
+        return (img_source, img_target), (latent_id_source, latent_id_target), is_same_ID
 
 
     def get_latent(self, idx):
