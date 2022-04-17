@@ -13,7 +13,7 @@ def create_model(opt):
     model.init(opt)
 
     if opt.isTrain and len(opt.gpu_ids):
-        model = nn.DataParallel(model, device_ids=opt.gpu_ids)
+        model = nn.DataParallel(model)
     return model
 
 
