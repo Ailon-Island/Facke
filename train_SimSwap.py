@@ -80,11 +80,12 @@ class Trainer:
             self.model.module.optim_D.step()
 
             # save loss
-            self.losses += [[loss.detach().cpu().item() for loss in losses]]
+            losses = [loss.detach().cpu().item() for loss in losses]
+            self.losses += [losses]
 
             # print result
             if self.total_iter % opt.print_freq == self.print_delta:
-                errors = dict(zip(model.module.loss_names, self.losses[-1]))
+                errors = dict(zip(model.module.loss_names, losses))
                 avg_iter_time = (time.time() - iter_start_time) / opt.print_freq
                 visualizer.print_current_errors(epoch_idx, epoch_iter, errors, avg_iter_time)
                 visualizer.plot_current_errors(errors, self.total_iter)
