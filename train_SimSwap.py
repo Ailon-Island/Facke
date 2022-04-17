@@ -65,6 +65,10 @@ class Trainer:
                 [losses, _] = model(img_source, img_target, latent_ID, latent_ID_target)
 
             ############ LOSSES ############
+            # gather losses
+            losses = [torch.mean(x) if not isinstance(x, int) else x for x in losses]
+
+            # loss dictionary
             loss_dict = dict(zip(model.module.loss_names, losses))
 
             # calculate final loss scalar
