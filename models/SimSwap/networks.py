@@ -1,10 +1,28 @@
 import torch
 from torch import nn
+from torchvision import transforms
 
 ###############################################################################
 # Code from
 # https://github.com/neuralchen/SimSwap
 ###############################################################################
+class InstanceNorm(nn.Module):
+    def __init__(self, epsilon=1e-8):
+        """
+            @notice: avoid in-place ops.
+            https://discuss.pytorch.org/t/encounter-the-runtimeerror-one-of-the-variables-needed-for-gradient-computation-has-been-modified-by-an-inplace-operation/836/3
+        """
+        super(InstanceNorm, self).__init__()
+        self.epsilon = epsilon
+
+    def forward(self, x):
+        x   = x - torch.mean(x, (2, 3), True)
+        tmp = torch.mul(x, x) # or x ** 2
+        tmp = torch.rsqrt(torch.mean(tmp, (2, 3), True) + self.epsilon)
+        return x * tmp
+
+
+
 class AdaIn(nn.Module):
     def __init__(self, latent_size, dim):
         super(AdaIn, self).__init__()
@@ -24,13 +42,13 @@ class AdaIn(nn.Module):
 class IDBlock(nn.Module):
     def __init__(self, dim, latent_size, padding_mode, activation=nn.ReLU(True)):
         super(IDBlock, self).__init__()
-        norm = nn.InstanceNorm2d(num_features=dim, eps=1e-8)
+
         self.conv1 = nn.Sequential(
             nn.ReflectionPad2d(padding=1) if padding_mode == 'reflect' else
             nn.ReplicationPad2d(padding=1) if padding_mode == 'replicate' else
             nn.ZeroPad2d(padding=1), # padding_mode == 'zero'
             nn.Conv2d(in_channels=dim, out_channels=dim, kernel_size=3),
-            norm
+            InstanceNorm()
         )
         self.adain1 = AdaIn(latent_size, dim)
 
@@ -41,7 +59,7 @@ class IDBlock(nn.Module):
             nn.ReplicationPad2d(padding=1) if padding_mode == 'replicate' else
             nn.ZeroPad2d(padding=1), # padding_mode == 'zero'
             nn.Conv2d(in_channels=dim, out_channels=dim, kernel_size=3),
-            norm
+            InstanceNorm()
         )
         self.adain2 = AdaIn(latent_size, dim)
 
@@ -60,7 +78,7 @@ class IDBlock(nn.Module):
 class Generator(nn.Module):
     def __init__(self, in_channels, out_channels, latent_size, num_ID_blocks=9,
                  norm=nn.BatchNorm2d,
-                 padding_mode='relect', activation = nn.ReLU(inplace=True)):
+                 padding_mode='reflect', activation = nn.ReLU(inplace=True)):
         super(Generator, self).__init__()
 
         # first convolution

@@ -47,10 +47,10 @@ class GANLoss(nn.Module):
         elif self.gan_mode == 'hinge':
             if forD:
                 if is_real:
-                    min = torch.min(input - 1, self.get_zero_tensor(input))
+                    minval = torch.min(input - 1, self.get_zero_tensor(input))
                 else:
-                    min = torch.min(- input - 1, self.get_zero_tensor(input))
-                loss = -torch.mean(min)
+                    minval = torch.min(- input - 1, self.get_zero_tensor(input))
+                loss = -torch.mean(minval)
             else: # wgan
                 if is_real:
                     loss = -input.mean()
@@ -87,7 +87,7 @@ class IDLoss(nn.Module):
     def forward(self, x, y):
         sim = self.sim(x,y)
         loss = 1 - sim
-        loss = loss.sum()
+        loss = loss.mean()
         return loss
 
 
@@ -133,8 +133,8 @@ class WFMLoss(nn.Module):
     def forward(self, feat):
         loss = 0
         for (feat_D_real, feat_D_fake) in zip(*feat):
-            for (feat_layer_real, feat_layer_fake) in zip(feat_D_real, feat_D_fake):
-                loss += self.diff(feat_layer_real, feat_layer_fake)
+            for (feat_layer_real, feat_layer_fake) in zip(feat_D_real[:-1], feat_D_fake[:-1]):
+                loss += self.diff(feat_layer_real.detach(), feat_layer_fake)
         loss = self.feat_weight * self.D_weight * loss
 
         return loss

@@ -16,15 +16,15 @@ class TrainOptions(BaseOptions):
         self.parser.add_argument('--debug', action='store_true', help='only do one epoch and displays at each iteration')
 
         # for training
+        self.parser.add_argument("--memory_check", action='store_true', default=False, help='check for unexpected memory increase batch by batch')
         self.parser.add_argument("--Arc_path", type=str, default='utils/Arcface/arcface_checkpoint.tar', help="run ONNX model via TRT")
         self.parser.add_argument('--continue_train', action='store_true', help='continue training: load the latest model')
         self.parser.add_argument('--load_pretrain', type=str, default='', help='load the pretrained model from the specified location')
-        self.parser.add_argument('--n_epochs', type=int, default=520, help='the epochs to train')
         self.parser.add_argument('--epoch_label', type=str, default='latest', help='which epoch to load? set to latest to use latest cached model')
         self.parser.add_argument('--phase', type=str, default='train', help='train, val, test, etc')
         self.parser.add_argument('--niter', type=int, default=10000, help='# of iter at starting learning rate')
         self.parser.add_argument('--niter_decay', type=int, default=10000, help='# of iter to linearly decay learning rate to zero')
-        self.parser.add_argument('--beta1', type=float, default=0.5, help='momentum term of adam')
+        self.parser.add_argument('--beta1', type=float, default=0.0, help='momentum term of adam')
         self.parser.add_argument('--lr', type=float, default=0.0002, help='initial learning rate for adam')
 
         # for discriminators        
@@ -32,9 +32,9 @@ class TrainOptions(BaseOptions):
         self.parser.add_argument('--n_layers_D', type=int, default=4, help='only used if which_model_netD==n_layers')
         self.parser.add_argument('--ndf', type=int, default=64, help='# of discrim filters in first conv layer')    
         self.parser.add_argument('--lambda_wFM', type=float, default=10.0, help='weight for feature matching loss')
-        self.parser.add_argument('--lambda_id', type=float, default=20.0, help='weight for id loss')
+        self.parser.add_argument('--lambda_id', type=float, default=10.0, help='weight for id loss')
         self.parser.add_argument('--lambda_rec', type=float, default=10.0, help='weight for reconstruction loss')
-        self.parser.add_argument('--lambda_GP', type=float, default=10.0, help='weight for gradient penalty loss')
+        self.parser.add_argument('--lambda_GP', type=float, default=1E-5, help='weight for gradient penalty loss')
         self.parser.add_argument('--no_ganFeat_loss', action='store_true', help='if specified, do *not* use discriminator feature matching loss')
         self.parser.add_argument('--no_vgg_loss', action='store_true', help='if specified, do *not* use VGG feature matching loss')        
         self.parser.add_argument('--gan_mode', type=str, default='hinge', help='(ls|original|hinge)')
