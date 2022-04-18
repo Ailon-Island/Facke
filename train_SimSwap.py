@@ -141,10 +141,10 @@ def test(opt, model, loader, epoch_idx, total_iter):
             [losses, img_fake] = model(img_source, img_target, latent_ID, latent_ID_target)
         else:
             [losses, _] = model(img_source, img_target, latent_ID, latent_ID_target)
-        losses = [loss.detach().cpu().item() for loss in losses]
         
         # gather losses
         losses = [torch.mean(x) if not isinstance(x, int) else x for x in losses]
+        losses = [loss.detach().cpu().item() for loss in losses]
 
         # save loss
         if not len(test_losses):
