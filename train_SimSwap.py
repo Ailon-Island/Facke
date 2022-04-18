@@ -118,6 +118,11 @@ class Trainer:
                     (torch.cuda.memory_allocated() - self.memory_first) / 1024. / 1024.))
                 self.memory_last = torch.cuda.memory_allocated()
 
+            # early stop
+            if epoch_iter >= opt.max_dataset_size:
+                break
+
+
 
 def test(opt, model, loader, epoch_idx, total_iter):
     test_start_time = time.time()
@@ -171,7 +176,11 @@ def test(opt, model, loader, epoch_idx, total_iter):
                                    ('generated_img', imgs_fake)
                                    ])
             visualizer.display_current_results_test(visuals, epoch_idx, total_iter)
-            print('{}-th demo testing image set for epoch {} displayed and saved.'.format(len(imgs_source), epoch_idx))
+            print('\r{}-th demo testing image set for epoch {} displayed and saved.'.format(len(imgs_source), epoch_idx))
+
+        # early stop
+        if test_iter >= opt.max_dataset_size:
+            break
 
     # print result
     test_losses = [test_loss / test_iter for test_loss in test_losses]
