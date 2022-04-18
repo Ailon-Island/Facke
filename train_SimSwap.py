@@ -166,8 +166,7 @@ def test(opt, model, loader, epoch_idx, total_iter):
             imgs_source.append(utils.tensor2im(img_target[0]))
             imgs_target.append(utils.tensor2im(img_source[0]))
             imgs_fake.append(utils.tensor2im(img_fake.data[0]))
-            print('\rSaving the {}-th demo image set...'.format(len(imgs_source)))
-            time.sleep(0.1)
+            print('\rSaving the {}-th demo image set...\n'.format(len(imgs_source)))
             visuals = OrderedDict([('source_img', imgs_source),
                                    ('id_img', imgs_target),
                                    ('generated_img', imgs_fake)
