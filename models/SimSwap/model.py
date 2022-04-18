@@ -145,7 +145,10 @@ class SimSwapGAN(ModelBase):
         loss_G_rec = self.Recloss(img_fake, img_target)
         loss_G_rec *= self.opt.lambda_rec
 
-        return [[loss_D_real, loss_D_fake, loss_D_GP, loss_G_GAN, loss_G_wFM, loss_G_ID, loss_G_rec], img_fake]
+        if self.training:
+            return [[loss_D_real, loss_D_fake, loss_D_GP, loss_G_GAN, loss_G_wFM, loss_G_ID, loss_G_rec], img_fake]
+        else:
+            return [[loss_D_real.detach(), loss_D_fake.detach(), loss_D_GP.detach(), loss_G_GAN.detach(), loss_G_wFM.detach(), loss_G_ID.detach(), loss_G_rec.detach()], img_fake.detach()]
         # self.loss_names = ['D_real', 'D_fake', 'D_GP', 'G_GAN', 'G_wFM', 'G_ID', 'G_rec']
 
 

@@ -14,6 +14,7 @@ from utils.visualizer import Visualizer
 from utils import utils
 from collections import OrderedDict
 import time
+import tqdm
 import warnings
 from utils.loss import IDLoss
 
@@ -118,7 +119,7 @@ class Trainer:
                 self.memory_last = torch.cuda.memory_allocated()
 
 
-def test(model, loader, epoch_idx, total_iter):
+def test(opt, model, loader, epoch_idx, total_iter):
     model.eval()
 
     test_start_time = time.time()
@@ -128,10 +129,12 @@ def test(model, loader, epoch_idx, total_iter):
     imgs_target = []
     imgs_fake = []
 
-    for batch_idx, ((img_source, img_target), (latent_ID, latent_ID_target), is_same_ID) in enumerate(loader):
+    print('Testing...')
+    for batch_idx, ((img_source, img_target), (latent_ID, latent_ID_target), is_same_ID) in enumerate(tqdm.tqdm(loader)):
+        batch_size = len(is_same_ID)
         is_same_ID = is_same_ID[0].detach().item()
 
-        save_fake = batch_idx % opt.display_freq_test == 0
+        save_fake = batch_idx * opt.batchSize % opt.display_freq_test == 0
 
         ########### FORWARD ###########
         if save_fake:
@@ -145,9 +148,9 @@ def test(model, loader, epoch_idx, total_iter):
             test_losses = losses
         else:
             test_losses = [
-                test_loss + loss if is_same_ID or loss_name != 'G_rec' else
+                test_loss + loss / batch_size if is_same_ID or loss_name != 'G_rec' else
                 test_loss
-                for loss_name, test_loss, loss in zip(model.module.loss_names, test_losses, loss)]
+                for loss_name, test_loss, loss in zip(model.module.loss_names, test_losses, losses)]
 
 
 
@@ -156,13 +159,15 @@ def test(model, loader, epoch_idx, total_iter):
             imgs_source.append(utils.tensor2im(img_target[0]))
             imgs_target.append(utils.tensor2im(img_source[0]))
             imgs_fake.append(utils.tensor2im(img_fake.data[0]))
+            print('Saving the {}-th demo image set...'.format(len(imgs_source)))
             visuals = OrderedDict([('source_img', imgs_source),
                                    ('id_img', imgs_target),
                                    ('generated_img', imgs_fake)
                                    ])
-            visualizer.display_current_results_test(visuals, epoch_idx)
+            visualizer.display_current_results_test(visuals, epoch_idx, total_iter)
 
     # print result
+    test_losses = [test_loss / len(test_loader) for test_loss in test_losses]
     test_losses = dict(zip(model.module.loss_names, test_losses))
     test_time = time.time() - test_start_time
     visualizer.print_current_errors_test(epoch_idx, epoch_iter, test_losses, test_time)
@@ -233,9 +238,13 @@ if __name__ == '__main__':
         start_epoch, epoch_iter = 1, 0
 
     opt.print_freq = lcm(opt.print_freq, opt.batchSize)
+    opt.display_freq = lcm(opt.display_freq, opt.batchSize)
+    opt.save_latest_freq = lcm(opt.save_latest_freq, opt.batchSize)
+    opt.display_freq_test = lcm(opt.display_freq_test, opt.batchSize)
     if opt.debug:
         opt.display_freq = 1
         opt.print_freq = 1
+        opt.display_freq_test = 1
         opt.niter = 1
         opt.niter_decay = 0
         opt.max_dataset_size = 10
@@ -247,32 +256,32 @@ if __name__ == '__main__':
     visualizer = Visualizer(opt)
 
     for epoch_idx in range(start_epoch, opt.niter + opt.niter_decay + 1):
-        epoch_start_time = time.time()
+        if not opt.test_only:
+            epoch_start_time = time.time()
 
-        # train for one epoch
-        if opt.fp16:
-            with autocast():
+            # train for one epoch
+            if opt.fp16:
+                with autocast():
+                    trainer.train(epoch_idx)
+            else:
                 trainer.train(epoch_idx)
-        else:
-            trainer.train(epoch_idx)
 
-        epoch_time = time.time() - epoch_start_time
-        print('End of epoch {}/{} \t Total time: {:.3f}'.format(epoch_idx, opt.niter + opt.niter_decay, epoch_time))
+            epoch_time = time.time() - epoch_start_time
+            print('End of epoch {}/{} \t Total time: {:.3f}'.format(epoch_idx, opt.niter + opt.niter_decay, epoch_time))
 
-        # save model for this epoch
-        if epoch_idx % opt.save_epoch_freq == 0:
-            print('saving the model at the end of epoch %d, iters %d' % (epoch_idx, trainer.total_iter))
-            model.module.save('latest')
-            model.module.save('{}_iter'.format(trainer.total_iter))
-            np.savetxt(iter_path, (epoch_idx + 1, 0), delimiter=',', fmt='%d')
+            # save model for this epoch
+            if epoch_idx % opt.save_epoch_freq == 0:
+                print('saving the model at the end of epoch %d, iters %d' % (epoch_idx, trainer.total_iter))
+                model.module.save('latest')
+                model.module.save('{}_iter'.format(trainer.total_iter))
+                np.savetxt(iter_path, (epoch_idx + 1, 0), delimiter=',', fmt='%d')
 
-        # lr decay
-        if epoch_idx > opt.niter:
-            model.module.update_lr()
+            # lr decay
+            if epoch_idx > opt.niter:
+                model.module.update_lr()
 
         # test model
-        with torch.no_grad():
-            test(model, test_loader, epoch_idx, trainer.total_iter)
+        test(opt, model, test_loader, epoch_idx, trainer.total_iter)
 
 
 
