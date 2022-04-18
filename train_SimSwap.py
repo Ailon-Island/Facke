@@ -120,9 +120,11 @@ class Trainer:
 
 
 def test(opt, model, loader, epoch_idx, total_iter):
+    test_start_time = time.time()
     model.eval()
 
-    test_start_time = time.time()
+    test_iter = 0
+
     test_losses = []
 
     imgs_source = []
@@ -132,9 +134,11 @@ def test(opt, model, loader, epoch_idx, total_iter):
     print('Testing...')
     for batch_idx, ((img_source, img_target), (latent_ID, latent_ID_target), is_same_ID) in enumerate(tqdm.tqdm(loader)):
         batch_size = len(is_same_ID)
+        test_iter += batch_size
+
         is_same_ID = is_same_ID[0].detach().item()
 
-        save_fake = batch_idx * opt.batchSize % opt.display_freq_test == 0
+        save_fake = test_iter % opt.display_freq_test == 0
 
         ########### FORWARD ###########
         if save_fake:
@@ -151,7 +155,7 @@ def test(opt, model, loader, epoch_idx, total_iter):
             test_losses = losses
         else:
             test_losses = [
-                test_loss + loss / batch_size if is_same_ID or loss_name != 'G_rec' else
+                test_loss + loss if is_same_ID or loss_name != 'G_rec' else
                 test_loss
                 for loss_name, test_loss, loss in zip(model.module.loss_names, test_losses, losses)]
 
@@ -162,7 +166,7 @@ def test(opt, model, loader, epoch_idx, total_iter):
             imgs_source.append(utils.tensor2im(img_target[0]))
             imgs_target.append(utils.tensor2im(img_source[0]))
             imgs_fake.append(utils.tensor2im(img_fake.data[0]))
-            print('Saving the {}-th demo image set...'.format(len(imgs_source)))
+            print('\nSaving the {}-th demo image set...'.format(len(imgs_source)))
             visuals = OrderedDict([('source_img', imgs_source),
                                    ('id_img', imgs_target),
                                    ('generated_img', imgs_fake)
@@ -170,7 +174,7 @@ def test(opt, model, loader, epoch_idx, total_iter):
             visualizer.display_current_results_test(visuals, epoch_idx, total_iter)
 
     # print result
-    test_losses = [test_loss / len(test_loader) for test_loss in test_losses]
+    test_losses = [test_loss / test_iter for test_loss in test_losses]
     test_losses = dict(zip(model.module.loss_names, test_losses))
     test_time = time.time() - test_start_time
     visualizer.print_current_errors_test(epoch_idx, epoch_iter, test_losses, test_time)
