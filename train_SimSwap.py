@@ -155,7 +155,7 @@ def test(opt, model, loader, epoch_idx, total_iter):
             test_losses = losses
         else:
             test_losses = [
-                test_loss + loss if is_same_ID or loss_name != 'G_rec' else
+                test_loss + loss * batch_size if is_same_ID or loss_name != 'G_rec' else
                 test_loss
                 for loss_name, test_loss, loss in zip(model.module.loss_names, test_losses, losses)]
 
@@ -166,12 +166,12 @@ def test(opt, model, loader, epoch_idx, total_iter):
             imgs_source.append(utils.tensor2im(img_target[0]))
             imgs_target.append(utils.tensor2im(img_source[0]))
             imgs_fake.append(utils.tensor2im(img_fake.data[0]))
-            print('\rSaving the {}-th demo image set...'.format(len(imgs_source)) + '' * 25)
             visuals = OrderedDict([('source_img', imgs_source),
                                    ('id_img', imgs_target),
                                    ('generated_img', imgs_fake)
                                    ])
             visualizer.display_current_results_test(visuals, epoch_idx, total_iter)
+            print('{}-th demo testing image set for epoch {} displayed and saved.'.format(len(imgs_source), epoch_idx))
 
     # print result
     test_losses = [test_loss / test_iter for test_loss in test_losses]
