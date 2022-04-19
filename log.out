@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "./train_SimSwap.py", line 1, in <module>
+    import cv2
+ModuleNotFoundError: No module named 'cv2'
