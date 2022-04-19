@@ -85,8 +85,8 @@ class BaseOptions():
                 self.opt.gpu_ids.append(id)
         
         # set gpu ids
-        if len(self.opt.gpu_ids) > 0:
-            torch.cuda.set_device(self.opt.gpu_ids[0])
+        # if len(self.opt.gpu_ids) > 0:
+        #     torch.cuda.set_device(self.opt.gpu_ids[0])
 
         args = vars(self.opt)
 
