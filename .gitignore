@@ -12,5 +12,5 @@ checkpoints/*
 **/.pytest_cache
 output
 tmp
-*.pyc
-*.out
+**.pyc
+**.out
