@@ -12,7 +12,7 @@ class TrainOptions(BaseOptions):
         self.parser.add_argument('--display_freq_test', type=int, default=1000, help='frequency of showing testing results on screen')
         self.parser.add_argument('--print_freq', type=int, default=100, help='frequency of showing training results on console')
         self.parser.add_argument('--save_latest_freq', type=int, default=10000, help='frequency of saving the latest results')
-        self.parser.add_argument('--save_epoch_freq', type=int, default=10000, help='frequency of saving checkpoints at the end of epochs')
+        self.parser.add_argument('--save_epoch_freq', type=int, default=1, help='frequency of saving checkpoints at the end of epochs')
         self.parser.add_argument('--no_html', action='store_true', help='do not save intermediate training results to [opt.checkpoints_dir]/[opt.name]/web/')
         self.parser.add_argument('--debug', action='store_true', help='only do one epoch and displays at each iteration')
         self.parser.add_argument('--test_only', action='store_true', help='only do one epoch and displays at each iteration')
