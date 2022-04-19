@@ -41,6 +41,7 @@ class BaseOptions():
         self.parser.add_argument('--label_nc', type=int, default=0, help='# of input label channels')
         self.parser.add_argument('--input_nc', type=int, default=3, help='# of input image channels')
         self.parser.add_argument('--output_nc', type=int, default=3, help='# of output image channels')
+        self.parser.add_argument('--intra_ID_random', action='store_true', default=True, help='whether to randomly pick two images when training batch with same ID')
 
         # for setting inputs
         self.parser.add_argument('--dataroot', type=str, default='./datasets/VGGface2_HQ/')

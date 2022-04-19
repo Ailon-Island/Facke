@@ -9,7 +9,7 @@ from utils import utils
 from utils.IDExtract import IDExtractor
 
 class VGGFace2HQDataset(DatasetBase):
-    def __init__(self, opt, isTrain=True, transform=None, is_same_ID=True, auto_same_ID=True, random_in_ID=True):  #isTrain=True, data_dir='datasets\\VGGface2_HQ', is_same_ID=True, transform=None):
+    def __init__(self, opt, isTrain=True, transform=None, is_same_ID=True, auto_same_ID=True):  #isTrain=True, data_dir='datasets\\VGGface2_HQ', is_same_ID=True, transform=None):
         self.opt = opt
         set = 'train' if isTrain else 'test'
         self.data_dir = os.path.join(opt.dataroot, set)
@@ -19,7 +19,7 @@ class VGGFace2HQDataset(DatasetBase):
         self.transform = transform
         self.is_same_ID = is_same_ID
         self.auto_same_ID = auto_same_ID
-        self.random_in_ID = random_in_ID
+        self.intra_ID_random = opt.intra_ID_random
         self.sample_cnt = 0
         self.label_ranges = [len(self.dataset.imgs)] * (len(self.dataset.classes) + 1)
         for i, target in enumerate(self.dataset.targets):
@@ -44,7 +44,7 @@ class VGGFace2HQDataset(DatasetBase):
         label_source = self.dataset.targets[idx_source]
         if self.is_same_ID:
             # pick target image from the same ID
-            if self.random_in_ID:
+            if self.intra_ID_random:
                 idx_target = random.randint(self.label_ranges[label_source], self.label_ranges[label_source + 1] - 2)
                 idx_target = idx_target + 1 if idx_target >= idx_source else idx_target
             else:
@@ -116,7 +116,7 @@ class VGGFace2HQDataset(DatasetBase):
             np.save(save_pth, latent_ID)
 
 
-
+# deprecated
 class ComposedLoader:
     def __init__(self, loader1, loader2):
         super(ComposedLoader, self).__init__()
