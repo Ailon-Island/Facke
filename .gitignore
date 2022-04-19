@@ -13,3 +13,4 @@ checkpoints/*
 output
 tmp
 *.pyc
+*.out
