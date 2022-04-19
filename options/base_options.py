@@ -6,6 +6,13 @@ import argparse
 import os
 from utils import utils
 import torch
+import math
+
+
+
+def lcm(a, b): return abs(a * b) / math.gcd(a, b) if a and b else 0
+
+
 
 class BaseOptions():
     def __init__(self):
@@ -88,9 +95,21 @@ class BaseOptions():
         # if len(self.opt.gpu_ids) > 0:
         #     torch.cuda.set_device(self.opt.gpu_ids[0])
 
+        self.opt.print_freq = lcm(self.opt.print_freq, self.opt.batchSize)
+        self.opt.display_freq = lcm(self.opt.display_freq, self.opt.batchSize)
+        self.opt.save_latest_freq = lcm(self.opt.save_latest_freq, self.opt.batchSize)
+        self.opt.display_freq_test = lcm(self.opt.display_freq_test, self.opt.batchSize)
+        if self.opt.debug:
+            self.opt.display_freq = 1
+            self.opt.print_freq = 1
+            self.opt.display_freq_test = 1
+            self.opt.niter = 1
+            self.opt.niter_decay = 1
+            self.opt.max_dataset_size = 10
+
         args = vars(self.opt)
 
-        print('------------ Options -------------')
+        print('------------ self.options -------------')
         for k, v in sorted(args.items()):
             print('%s: %s' % (str(k), str(v)))
         print('-------------- End ----------------')
@@ -101,9 +120,9 @@ class BaseOptions():
             utils.mkdirs(expr_dir)
             if save and not self.opt.continue_train:
                 file_name = os.path.join(expr_dir, 'opt.txt')
-                with open(file_name, 'wt') as opt_file:
-                    opt_file.write('------------ Options -------------\n')
+                with open(file_name, 'wt') as self.opt_file:
+                    self.opt_file.write('------------ self.options -------------\n')
                     for k, v in sorted(args.items()):
-                        opt_file.write('%s: %s\n' % (str(k), str(v)))
-                    opt_file.write('-------------- End ----------------\n')
+                        self.opt_file.write('%s: %s\n' % (str(k), str(v)))
+                    self.opt_file.write('-------------- End ----------------\n')
         return self.opt

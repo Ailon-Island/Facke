@@ -19,8 +19,6 @@ import warnings
 from utils.loss import IDLoss
 
 
-def lcm(a, b): return abs(a * b) / math.gcd(a, b) if a and b else 0
-
 
 class Trainer:
     def __init__(self, loader, model, opt, start_epoch, epoch_iter):
@@ -174,7 +172,7 @@ def test(opt, model, loader, epoch_idx, total_iter):
                                    ('generated_img', imgs_fake)
                                    ])
             visualizer.display_current_results_test(visuals, epoch_idx, total_iter)
-            print('\r{}-th demo testing image set for epoch {} displayed and saved.'.format(len(imgs_source), epoch_idx))
+            print('\r{}-th demo testing image set saved. {:>}'.format(len(imgs_source), ''))
 
         # early stop
         if test_iter >= opt.max_dataset_size:
@@ -254,18 +252,6 @@ if __name__ == '__main__':
         print('Resuming from epoch %d at iteration %d' % (start_epoch, epoch_iter))
     else:
         start_epoch, epoch_iter = 1, 0
-
-    opt.print_freq = lcm(opt.print_freq, opt.batchSize)
-    opt.display_freq = lcm(opt.display_freq, opt.batchSize)
-    opt.save_latest_freq = lcm(opt.save_latest_freq, opt.batchSize)
-    opt.display_freq_test = lcm(opt.display_freq_test, opt.batchSize)
-    if opt.debug:
-        opt.display_freq = 1
-        opt.print_freq = 1
-        opt.display_freq_test = 1
-        opt.niter = 1
-        opt.niter_decay = 1
-        opt.max_dataset_size = 10
 
     model = create_model(opt)
 
