@@ -184,7 +184,7 @@ def test(opt, model, loader, epoch_idx, total_iter):
     test_losses = [test_loss / test_iter for test_loss in test_losses]
     test_losses = dict(zip(model.module.loss_names, test_losses))
     test_time = time.time() - test_start_time
-    visualizer.print_current_errors_test(epoch_idx, epoch_iter, test_losses, test_time)
+    visualizer.print_current_errors_test(epoch_idx, total_iter, test_losses, test_time)
     visualizer.plot_current_errors_test(test_losses, total_iter)
 
 
