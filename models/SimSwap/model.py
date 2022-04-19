@@ -81,6 +81,8 @@ class SimSwapGAN(ModelBase):
         params = list(self.D1.parameters()) + list(self.D2.parameters())
         self.optim_D = torch.optim.Adam(params, lr=opt.lr, betas=(opt.beta1, 0.999))
 
+        self.old_lr = opt.lr
+
         if opt.verbose:
             print("SimSwap model initiated.")
 

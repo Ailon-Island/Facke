@@ -164,8 +164,6 @@ def test(opt, model, loader, epoch_idx, total_iter):
                 test_loss
                 for loss_name, test_loss, loss in zip(model.module.loss_names, test_losses, losses)]
 
-
-
         # display images
         if save_fake:
             imgs_source.append(utils.tensor2im(img_target[0]))
@@ -262,7 +260,7 @@ if __name__ == '__main__':
         opt.print_freq = 1
         opt.display_freq_test = 1
         opt.niter = 1
-        opt.niter_decay = 0
+        opt.niter_decay = 1
         opt.max_dataset_size = 10
 
     model = create_model(opt)
