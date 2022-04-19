@@ -19,7 +19,7 @@ class VGGFace2HQDataset(DatasetBase):
         self.transform = transform
         self.is_same_ID = is_same_ID
         self.auto_same_ID = auto_same_ID
-        self.intra_ID_random = opt.intra_ID_random
+        self.intra_ID_random = not opt.no_intra_ID_random
         self.sample_cnt = 0
         self.label_ranges = [len(self.dataset.imgs)] * (len(self.dataset.classes) + 1)
         for i, target in enumerate(self.dataset.targets):
