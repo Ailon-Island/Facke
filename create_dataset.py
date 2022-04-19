@@ -12,6 +12,8 @@ import time
 import matplotlib.pyplot as plt
 import warnings
 from utils.loss import IDLoss
+from utils.utils import mkdirs
+import os
 
 warnings.filterwarnings("ignore")
 torch.autograd.set_detect_anomaly(True)
@@ -20,6 +22,22 @@ torch.autograd.set_detect_anomaly(True)
 
 if __name__ == '__main__':
     opt = TrainOptions().parse()
+
+    path = opt.dataroot
+
+    train_path = os.path.join(path, 'train')
+    test_path = os.path.join(path, 'test')
+
+    # create folders
+    for d in os.listdir(os.path.join(train_path, 'images')):
+        path = os.path.join(train_path, 'latent-ID')
+        path = os.path.join(path, d)
+        mkdirs(path)
+
+    for d in os.listdir(os.path.join(test_path, 'images')):
+        path = os.path.join(test_path, 'latent-ID')
+        path = os.path.join(path, d)
+        mkdirs(path)
 
     transformer_to_tensor = transforms.ToTensor()
 
