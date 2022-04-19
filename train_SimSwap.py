@@ -55,6 +55,8 @@ class Trainer:
             # whether to collect output images
             save_fake = self.total_iter % opt.display_freq == self.display_delta
 
+            if opt.ID_check:
+                print(is_same_ID)
             is_same_ID = is_same_ID[0].detach().item()
 
             ########### FORWARD ###########
@@ -214,9 +216,9 @@ if __name__ == '__main__':
 
     print("Generating data loaders...")
     train_data = VGGFace2HQDataset(opt, isTrain=True, transform=transformer_Arcface, is_same_ID=True, auto_same_ID=True)
-    train_loader = DataLoader(dataset=train_data, batch_size=opt.batchSize, shuffle=True, num_workers=opt.num_workers)
+    train_loader = DataLoader(dataset=train_data, batch_size=opt.batchSize, shuffle=True, num_workers=opt.nThreads)
     test_data = VGGFace2HQDataset(opt, isTrain=False, transform=transformer_Arcface, is_same_ID=True, auto_same_ID=True)
-    test_loader = DataLoader(dataset=test_data, batch_size=opt.batchSize, shuffle=False, num_workers=opt.num_workers)
+    test_loader = DataLoader(dataset=test_data, batch_size=opt.batchSize, shuffle=False, num_workers=opt.nThreads)
     print("Dataloaders ready.")
 
     ###############################################################################

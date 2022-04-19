@@ -35,7 +35,6 @@ class BaseOptions():
 
         # input/output sizes       
         self.parser.add_argument('--batchSize', type=int, default=8, help='input batch size')
-        self.parser.add_argument('--num_workers', type=int, default=2, help='threads of the dataloader')
         self.parser.add_argument('--loadSize', type=int, default=1024, help='scale images to this size')
         self.parser.add_argument('--fineSize', type=int, default=512, help='then crop to this size')
         self.parser.add_argument('--label_nc', type=int, default=0, help='# of input label channels')
@@ -48,7 +47,7 @@ class BaseOptions():
         self.parser.add_argument('--resize_or_crop', type=str, default='scale_width', help='scaling and cropping of images at load time [resize_and_crop|crop|scale_width|scale_width_and_crop]')
         self.parser.add_argument('--serial_batches', action='store_true', help='if true, takes images in order to make batches, otherwise takes them randomly')        
         self.parser.add_argument('--no_flip', action='store_true', help='if specified, do not flip the images for data argumentation') 
-        self.parser.add_argument('--nThreads', default=2, type=int, help='# threads for loading data')                
+        self.parser.add_argument('--nThreads', default=1, type=int, help='# threads for loading data')
         self.parser.add_argument('--max_dataset_size', type=int, default=float("inf"), help='Maximum number of samples allowed per dataset. If the dataset directory contains more than max_dataset_size, only a subset is loaded.')
 
         # for displays
