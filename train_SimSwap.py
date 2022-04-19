@@ -196,6 +196,10 @@ if __name__ == '__main__':
 
     opt = TrainOptions().parse()
 
+    if len(opt.gpu_ids):
+        print('GPU available: {}'.format(torch.cuda.is_available()))
+        print('GPU count: {}'.format(torch.cuda.device_count()))
+
     transformer_Arcface = transforms.Compose([
         transforms.ToTensor(),
         transforms.Resize((opt.image_size, opt.image_size)),
