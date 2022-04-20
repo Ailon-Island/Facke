@@ -2,6 +2,7 @@ import os
 import numpy as np
 import torch
 import torch.nn.functional as F
+from torch.utils.data import DataLoader
 from .dataset_base import DatasetBase
 from torchvision import datasets, transforms
 import random
@@ -10,12 +11,13 @@ from utils.IDExtract import IDExtractor
 
 class VGGFace2HQDataset(DatasetBase):
     def __init__(self, opt, isTrain=True, transform=None, is_same_ID=True, auto_same_ID=True):  #isTrain=True, data_dir='datasets\\VGGface2_HQ', is_same_ID=True, transform=None):
+        #print('Dataset initiated!')
         self.opt = opt
         set = 'train' if isTrain else 'test'
         self.data_dir = os.path.join(opt.dataroot, set)
         img_dir = os.path.join(self.data_dir, 'images')
         self.dataset = datasets.ImageFolder(img_dir)
-        self.batch_size = opt.batchSize
+        self.toggle_interval = opt.batchSize * (opt.nThreads % 2)
         self.transform = transform
         self.is_same_ID = is_same_ID
         self.auto_same_ID = auto_same_ID
@@ -25,6 +27,9 @@ class VGGFace2HQDataset(DatasetBase):
         for i, target in enumerate(self.dataset.targets):
             self.label_ranges[target] = min(self.label_ranges[target], i)
         self.ID_extract = None
+        self.num_workers = torch.zeros(1, dtype=int)
+        self.num_workers.share_memory_()
+        self.worker = None
 
 
     def toggle_is_same_ID(self):
@@ -36,6 +41,14 @@ class VGGFace2HQDataset(DatasetBase):
 
 
     def __getitem__(self, idx_source):
+        # tell the current worker
+        if self.worker is None:
+            self.worker = self.num_workers.item()
+            self.num_workers += 1
+            print('The {}-th worker spawned!'.format(self.worker))
+            self.is_same_ID = (self.worker + self.is_same_ID) % 2 == 1
+
+
         # get source image
         img_source = self.dataset[idx_source][0]
 
@@ -74,7 +87,7 @@ class VGGFace2HQDataset(DatasetBase):
         is_same_ID = self.is_same_ID
         if self.auto_same_ID:
             self.sample_cnt += 1;
-            if self.sample_cnt == self.batch_size:
+            if self.sample_cnt == self.toggle_interval:
                 self.toggle_is_same_ID()
                 self.sample_cnt = 0
 
@@ -116,7 +129,20 @@ class VGGFace2HQDataset(DatasetBase):
             np.save(save_pth, latent_ID)
 
 
-# deprecated
+    def set_loader(self, loader):
+        self.is_same_ID = loader.is_same_ID
+
+
+
+class VGGFace2HQDataLoader(DataLoader):
+    def __init__(self, dataset: VGGFace2HQDataset, opt, is_same_ID=True):
+        super(VGGFace2HQDataLoader, self).__init__(dataset=dataset, batch_size=opt.batchSize, shuffle=not opt.serial_batches ,num_workers=opt.nThreads)
+        self.dataset.set_loader(self)
+        self.is_same_ID = is_same_ID
+
+
+
+################################# deprecated #######################################
 class ComposedLoader:
     def __init__(self, loader1, loader2):
         super(ComposedLoader, self).__init__()
