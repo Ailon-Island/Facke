@@ -27,9 +27,6 @@ class VGGFace2HQDataset(DatasetBase):
         for i, target in enumerate(self.dataset.targets):
             self.label_ranges[target] = min(self.label_ranges[target], i)
         self.ID_extract = None
-        self.num_workers = torch.zeros(1, dtype=int)
-        self.num_workers.share_memory_()
-        self.worker = None
 
 
     def toggle_is_same_ID(self):
@@ -41,14 +38,6 @@ class VGGFace2HQDataset(DatasetBase):
 
 
     def __getitem__(self, idx_source):
-        # tell the current worker
-        if self.worker is None:
-            self.worker = self.num_workers.item()
-            self.num_workers += 1
-            print('The {}-th worker spawned!'.format(self.worker))
-            self.is_same_ID = (self.worker + self.is_same_ID) % 2 == 1
-
-
         # get source image
         img_source = self.dataset[idx_source][0]
 
@@ -129,16 +118,9 @@ class VGGFace2HQDataset(DatasetBase):
             np.save(save_pth, latent_ID)
 
 
-    def set_loader(self, loader):
-        self.is_same_ID = loader.is_same_ID
-
-
-
-class VGGFace2HQDataLoader(DataLoader):
-    def __init__(self, dataset: VGGFace2HQDataset, opt, is_same_ID=True):
-        super(VGGFace2HQDataLoader, self).__init__(dataset=dataset, batch_size=opt.batchSize, shuffle=not opt.serial_batches ,num_workers=opt.nThreads)
-        self.dataset.set_loader(self)
-        self.is_same_ID = is_same_ID
+    def set_worker(self, worker_id):
+        print('The {}-th worker spawned!'.format(worker_id))
+        self.is_same_ID = (worker_id + self.is_same_ID) % 2 == 1
 
 
 

@@ -216,9 +216,9 @@ if __name__ == '__main__':
 
     print("Generating data loaders...")
     train_data = VGGFace2HQDataset(opt, isTrain=True, transform=transformer_Arcface, is_same_ID=True, auto_same_ID=True)
-    train_loader = DataLoader(dataset=train_data, batch_size=opt.batchSize, shuffle=True, num_workers=opt.nThreads)
+    train_loader = DataLoader(dataset=train_data, batch_size=opt.batchSize, shuffle=True, num_workers=opt.nThreads, worker_init_fn=train_data.set_worker)
     test_data = VGGFace2HQDataset(opt, isTrain=False, transform=transformer_Arcface, is_same_ID=True, auto_same_ID=True)
-    test_loader = DataLoader(dataset=test_data, batch_size=opt.batchSize, shuffle=False, num_workers=opt.nThreads)
+    test_loader = DataLoader(dataset=test_data, batch_size=opt.batchSize, shuffle=False, num_workers=opt.nThreads, worker_init_fn=train_data.set_worker)
     print("Dataloaders ready.")
 
     ###############################################################################
