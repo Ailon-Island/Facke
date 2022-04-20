@@ -119,7 +119,8 @@ class VGGFace2HQDataset(DatasetBase):
 
 
     def set_worker(self, worker_id):
-        print('The {}-th worker spawned!'.format(worker_id))
+        if self.opt.verbose:
+            print('The {}-th worker spawned!'.format(worker_id))
         self.is_same_ID = (worker_id + self.is_same_ID) % 2 == 1
 
 
