@@ -21,7 +21,7 @@ from utils.loss import IDLoss
 
 
 class Trainer:
-    def __init__(self, loader, model, opt, start_epoch, epoch_iter):
+    def __init__(self, loader, model, opt, start_epoch, epoch_iter, visualizer):
         super(Trainer, self).__init__()
         self.model = model
         self.opt = opt
@@ -30,11 +30,9 @@ class Trainer:
         self.start_epoch = start_epoch
         self.start_epoch_iter = epoch_iter
         self.total_iter = (start_epoch - 1) * len(loader) + epoch_iter
-        self.display_delta = self.total_iter % opt.display_freq
-        self.print_delta = self.total_iter % opt.print_freq
-        self.save_delta = self.total_iter % opt.save_latest_freq
         self.memory_last = 0
         self.memory_first = None
+        self.visualizer = visualizer
 
 
     def train(self, epoch_idx):
@@ -43,9 +41,13 @@ class Trainer:
         epoch_start_time = time.time()
         epoch_iter = self.start_epoch_iter if epoch_idx == self.start_epoch else 0
         opt = self.opt
+        visualizer = self.visualizer
+        display_delta = epoch_iter % opt.display_freq
+        print_delta = epoch_iter % opt.print_freq
+        save_delta = self.total_iter % opt.save_latest_freq
 
         for batch_idx, ((img_source, img_target), (latent_ID, latent_ID_target), is_same_ID) in enumerate(self.loader):
-            if self.total_iter % opt.print_freq == self.print_delta:
+            if self.total_iter % opt.print_freq == print_delta:
                 iter_start_time = time.time()
 
             batch_size = len(is_same_ID)
@@ -53,7 +55,7 @@ class Trainer:
             epoch_iter += batch_size
 
             # whether to collect output images
-            save_fake = self.total_iter % opt.display_freq == self.display_delta
+            save_fake = self.total_iter % opt.display_freq == display_delta
 
             if opt.ID_check:
                 print(is_same_ID)
@@ -89,7 +91,7 @@ class Trainer:
             self.losses += [losses]
 
             # print result
-            if self.total_iter % opt.print_freq == self.print_delta:
+            if self.total_iter % opt.print_freq == print_delta:
                 errors = dict(zip(model.module.loss_names, losses))
                 avg_iter_time = (time.time() - iter_start_time) / opt.print_freq
                 visualizer.print_current_errors(epoch_idx, epoch_iter, errors, avg_iter_time)
@@ -104,7 +106,7 @@ class Trainer:
                 visualizer.display_current_results(visuals, epoch_idx, self.total_iter)
 
            # save model
-            if (self.total_iter % opt.save_latest_freq == self.save_delta):
+            if (self.total_iter % opt.save_latest_freq == save_delta):
                 self.model.module.save('latest')
                 self.model.module.save('{}_iter'.format(self.total_iter))
                 np.savetxt(iter_path, (epoch_idx, epoch_iter), delimiter=',', fmt='%d')
@@ -124,7 +126,7 @@ class Trainer:
 
 
 
-def test(opt, model, loader, epoch_idx, total_iter):
+def test(opt, model, loader, epoch_idx, total_iter, visualizer):
     test_start_time = time.time()
     model.eval()
 
@@ -257,9 +259,9 @@ if __name__ == '__main__':
 
     model = create_model(opt)
 
-    trainer = Trainer(train_loader, model, opt, start_epoch, epoch_iter)
-
     visualizer = Visualizer(opt)
+
+    trainer = Trainer(train_loader, model, opt, start_epoch, epoch_iter, visualizer)
 
     for epoch_idx in range(start_epoch, opt.niter + opt.niter_decay + 1):
         if not opt.test_only:
@@ -287,7 +289,7 @@ if __name__ == '__main__':
                 model.module.update_lr()
 
         # test model
-        test(opt, model, test_loader, epoch_idx, trainer.total_iter)
+        test(opt, model, test_loader, epoch_idx, trainer.total_iter, visualizer)
 
 
 
