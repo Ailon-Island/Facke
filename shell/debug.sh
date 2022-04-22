@@ -1,7 +1,8 @@
 #! /bin/bash
 #SBATCH -J Facke
 #SBATCH -p gpu
-#SBATCH -N 1
+#SBATCH -N 16
+#SBATCH --ntasks-per-node 4
 #SBATCH -o log.out
 #SBATCH -t 10-10:00:00
 #SBATCH --gres=gpu:2
