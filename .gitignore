@@ -16,3 +16,4 @@ output/**
 tmp
 **.pyc
 **.out
+**.jpg
