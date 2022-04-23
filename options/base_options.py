@@ -94,19 +94,19 @@ class BaseOptions():
         # set gpu ids
         # if len(self.opt.gpu_ids) > 0:
         #     torch.cuda.set_device(self.opt.gpu_ids[0])
-
-        self.opt.print_freq = lcm(self.opt.print_freq, self.opt.batchSize)
-        self.opt.display_freq = lcm(self.opt.display_freq, self.opt.batchSize)
-        self.opt.save_latest_freq = lcm(self.opt.save_latest_freq, self.opt.batchSize)
-        self.opt.display_freq_test = lcm(self.opt.display_freq_test, self.opt.batchSize)
-        if self.opt.debug:
-            self.opt.display_freq = 1
-            self.opt.print_freq = 1
-            self.opt.display_freq_test = 1
-            self.opt.niter = 1
-            self.opt.niter_decay = 1
-            self.opt.max_dataset_size = 10
-            self.opt.name = 'debug'
+        if self.isTrain:
+            self.opt.print_freq = lcm(self.opt.print_freq, self.opt.batchSize)
+            self.opt.display_freq = lcm(self.opt.display_freq, self.opt.batchSize)
+            self.opt.save_latest_freq = lcm(self.opt.save_latest_freq, self.opt.batchSize)
+            self.opt.display_freq_test = lcm(self.opt.display_freq_test, self.opt.batchSize)
+            if self.opt.debug:
+                self.opt.display_freq = 1
+                self.opt.print_freq = 1
+                self.opt.display_freq_test = 1
+                self.opt.niter = 1
+                self.opt.niter_decay = 1
+                self.opt.max_dataset_size = 10
+                self.opt.name = 'debug'
 
         args = vars(self.opt)
 

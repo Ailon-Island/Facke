@@ -40,7 +40,7 @@ class SimSwapGAN(ModelBase):
         if not self.isTrain:
             # load G only
             pretrained_path = '' if not self.isTrain else opt.load_pretrain
-            self.load_net(self.G, opt.epoch_label, 'G', pretrained_path)
+            self.load_net(self.G, 'G', opt.epoch_label, pretrained_path)
             return
         ######################################################################
 
