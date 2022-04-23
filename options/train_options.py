@@ -8,7 +8,7 @@ class TrainOptions(BaseOptions):
     def initialize(self):
         BaseOptions.initialize(self)
         # for displays
-        self.parser.add_argument('--display_freq', type=int, default=40, help='frequency of showing training results on screen')
+        self.parser.add_argument('--display_freq', type=int, default=2000, help='frequency of showing training results on screen')
         self.parser.add_argument('--display_freq_test', type=int, default=1000, help='frequency of showing testing results on screen')
         self.parser.add_argument('--print_freq', type=int, default=200, help='frequency of showing training results on console')
         self.parser.add_argument('--save_latest_freq', type=int, default=10000, help='frequency of saving the latest results')
