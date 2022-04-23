@@ -12,12 +12,14 @@ from data.VGGface2HQ import VGGFace2HQDataset, ComposedLoader
 import time
 import matplotlib.pyplot as plt
 import warnings
+from utils import utils
 
 warnings.filterwarnings("ignore")
 
 
 if __name__ == '__main__':
     opt = TestOptions().parse()
+    opt.name = 'SimSwap_WO_intra-ID_random'
 
     transformer_Arcface = transforms.Compose([
         transforms.ToTensor(),
@@ -34,8 +36,8 @@ if __name__ == '__main__':
         from torch.cuda.amp import autocast
 
     print("Generating data loaders...")
-    test_data = VGGFace2HQDataset(opt, isTrain=False,  transform=transformer_Arcface)
-    test_loader = DataLoader(dataset=test_data, batch_size=1, shuffle=True, num_workers=16)
+    test_data = VGGFace2HQDataset(opt, isTrain=False,  transform=transformer_Arcface, is_same_ID=True, auto_same_ID=False)
+    test_loader = DataLoader(dataset=test_data, batch_size=1, shuffle=True, num_workers=1)
     print("Datasets ready.")
 
     torch.nn.Module.dump_patches = True
@@ -45,52 +47,29 @@ if __name__ == '__main__':
     with torch.no_grad():
         it = iter(test_loader)
         (img_source, img_target), (latent_ID, latent_ID_target), _ = next(it)
+        img_source, img_target, latent_ID, latent_ID_target = img_source.to('cuda'), img_target.to('cuda'), latent_ID.to('cuda'), latent_ID_target.to('cuda')
         img_fake = model(img_source, img_target, latent_ID, latent_ID_target)
 
-        img_source = detransformer_Arcface(img_source)
-        img_target = detransformer_Arcface(img_target)
-        img_fake = detransformer_Arcface(img_target)
+        # img_source = detransformer_Arcface(img_source)
+        # img_target = detransformer_Arcface(img_target)
+        # img_fake = detransformer_Arcface(img_target)
 
-        for i in range(img_source.shape[0]):
-            if i == 0:
-                row1 = img_source[i]
-                row2 = img_target[i]
-                row3 = img_fake[i]
-            else:
-                row1 = torch.cat([row1, img_source[i]], dim=2)
-                row2 = torch.cat([row2, img_target[i]], dim=2)
-                row3 = torch.cat([row3, img_fake[i]], dim=2)
+        img_source = utils.tensor2im(img_source[0])
+        img_target = utils.tensor2im(img_target[0])
+        img_fake = utils.tensor2im(img_fake.data[0])
 
-        # full = torch.cat([row1, row2, row3], dim=1).detach()
-        full = row1.detach()
-        full = full.permute(1, 2, 0)
-        output = full.to('cpu')
-        output = np.array(output)
-        output = output[..., ::-1]
+        plt.figure(1)
+        plt.imshow(img_source)
+        utils.save_image(img_source, opt.output_path + 'source.jpg')
 
-        plt.imshow(output)
-        plt.show()
-        cv2.imwrite(opt.output_path + 'source.jpg',output)
+        plt.figure(2)
+        plt.imshow(img_target)
+        utils.save_image(img_target, opt.output_path + 'target.jpg')
 
-        full = row2.detach()
-        full = full.permute(1, 2, 0)
-        output = full.to('cpu')
-        output = np.array(output)
-        output = output[..., ::-1]
-
-        plt.imshow(output)
-        plt.show()
-        cv2.imwrite(opt.output_path + 'target.jpg',output)
-
-        full = row3.detach()
-        full = full.permute(1, 2, 0)
-        output = full.to('cpu')
-        output = np.array(output)
-        output = output[..., ::-1]
-
-        plt.imshow(output)
-        plt.show()
-        cv2.imwrite(opt.output_path + 'result.jpg',output)
+        plt.figure(3)
+        plt.imshow(img_fake)
+        utils.save_image(img_fake, opt.output_path + 'result.jpg')
 
         print("done!")
 
+        plt.show()

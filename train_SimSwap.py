@@ -12,11 +12,18 @@ from models.models import create_model
 from data.VGGface2HQ import VGGFace2HQDataset, ComposedLoader
 from utils.visualizer import Visualizer
 from utils import utils
+from utils.plot import plot_batch
 from collections import OrderedDict
 import time
 import tqdm
 import warnings
 from utils.loss import IDLoss
+
+
+detransformer_Arcface = transforms.Compose([
+    transforms.Normalize([0, 0, 0], [1 / 0.229, 1 / 0.224, 1 / 0.225]),
+    transforms.Normalize([-0.485, -0.456, -0.406], [1, 1, 1])
+])
 
 
 
@@ -33,6 +40,8 @@ class Trainer:
         self.memory_last = 0
         self.memory_first = None
         self.visualizer = visualizer
+        self.sample_path = os.path.join(opt.checkpoints_dir, opt.name, 'samples', 'train')
+        self.sample_size = min(8, opt.batchSize)
 
 
     def train(self, epoch_idx):
@@ -42,30 +51,27 @@ class Trainer:
         epoch_iter = self.start_epoch_iter if epoch_idx == self.start_epoch else 0
         opt = self.opt
         visualizer = self.visualizer
-        display_delta = epoch_iter % opt.display_freq
-        print_delta = epoch_iter % opt.print_freq
+        display_delta = self.total_iter % opt.display_freq
+        print_delta = self.total_iter % opt.print_freq
         save_delta = self.total_iter % opt.save_latest_freq
 
         for batch_idx, ((img_source, img_target), (latent_ID, latent_ID_target), is_same_ID) in enumerate(self.loader):
             if self.total_iter % opt.print_freq == print_delta:
                 iter_start_time = time.time()
 
+            if len(opt.gpu_ids):
+                img_source, img_target, latent_ID, latent_ID_target = img_source.to('cuda'), img_target.to('cuda'), latent_ID.to('cuda'), latent_ID_target.to('cuda')
+
             batch_size = len(is_same_ID)
             self.total_iter += batch_size
             epoch_iter += batch_size
-
-            # whether to collect output images
-            save_fake = self.total_iter % opt.display_freq == display_delta
 
             if opt.ID_check:
                 print(is_same_ID)
             is_same_ID = is_same_ID[0].detach().item()
 
             ########### FORWARD ###########
-            if save_fake:
-                [losses, img_fake] = model(img_source, img_target, latent_ID, latent_ID_target)
-            else:
-                [losses, _] = model(img_source, img_target, latent_ID, latent_ID_target)
+            [losses, _] = model(img_source, img_target, latent_ID, latent_ID_target)
 
             ############ LOSSES ############
             # gather losses
@@ -98,12 +104,45 @@ class Trainer:
                 visualizer.plot_current_errors(errors, self.total_iter)
 
             # display images
-            if save_fake:
-                visuals = OrderedDict([('source_img', utils.tensor2im(img_target[0])),
-                                       ('id_img', utils.tensor2im(img_source[0])),
-                                       ('generated_img', utils.tensor2im(img_fake.data[0]))
-                                       ])
-                visualizer.display_current_results(visuals, epoch_idx, self.total_iter)
+            if self.total_iter % opt.display_freq == display_delta:
+                if not os.path.exists(self.sample_path):
+                    os.mkdir(self.sample_path)
+
+                model.module.G.eval()
+                with torch.no_grad():
+                    img_source = img_source[:self.sample_size]
+                    latent_ID = latent_ID[:self.sample_size]
+
+                    imgs = []
+                    zero_img = (torch.zeros_like(img_source[0, ...]))
+                    imgs.append(zero_img.cpu().numpy())
+                    save_img = (detransformer_Arcface(img_source.cpu())).numpy()
+
+                    for r in range(self.sample_size):
+                        imgs.append(save_img[r, ...])
+
+                    for i in range(self.sample_size):
+                        imgs.append(save_img[i, ...])
+
+                        image_infer = img_source[i, ...].repeat(self.sample_size, 1, 1, 1)
+                        img_fake = model.module.G(image_infer, latent_ID)
+
+                        img_fake = detransformer_Arcface(img_fake).cpu().numpy()
+
+                        for j in range(self.sample_size):
+                            imgs.append(img_fake[j, ...])
+
+                    print("Save test data for iter {}.".format(self.total_iter))
+                    imgs = np.stack(imgs, axis=0).transpose(0, 2, 3, 1)
+                    plot_batch(imgs, os.path.join(self.sample_path, 'step_' + str(self.total_iter) + '.jpg'))
+                    
+                    
+                    
+                # visuals = OrderedDict([('source_img', utils.tensor2im(img_target[0])),
+                #                        ('id_img', utils.tensor2im(img_source[0])),
+                #                        ('generated_img', utils.tensor2im(img_fake.data[0]))
+                #                        ])
+                # visualizer.display_current_results(visuals, epoch_idx, self.total_iter)
 
            # save model
             if (self.total_iter % opt.save_latest_freq == save_delta):
@@ -145,13 +184,8 @@ def test(opt, model, loader, epoch_idx, total_iter, visualizer):
 
         is_same_ID = is_same_ID[0].detach().item()
 
-        save_fake = test_iter % opt.display_freq_test == 0
-
         ########### FORWARD ###########
-        if save_fake:
-            [losses, img_fake] = model(img_source, img_target, latent_ID, latent_ID_target)
-        else:
-            [losses, _] = model(img_source, img_target, latent_ID, latent_ID_target)
+        [losses, _] = model(img_source, img_target, latent_ID, latent_ID_target)
         
         # gather losses
         losses = [torch.mean(x) if not isinstance(x, int) else x for x in losses]
@@ -167,16 +201,41 @@ def test(opt, model, loader, epoch_idx, total_iter, visualizer):
                 for loss_name, test_loss, loss in zip(model.module.loss_names, test_losses, losses)]
 
         # display images
-        if save_fake:
-            imgs_source.append(utils.tensor2im(img_target[0]))
-            imgs_target.append(utils.tensor2im(img_source[0]))
-            imgs_fake.append(utils.tensor2im(img_fake.data[0]))
-            visuals = OrderedDict([('source_img', imgs_source),
-                                   ('id_img', imgs_target),
-                                   ('generated_img', imgs_fake)
-                                   ])
-            visualizer.display_current_results_test(visuals, epoch_idx, total_iter)
-            print('\r{}-th demo testing image set saved. {:>}'.format(len(imgs_source), ''))
+        if test_iter == 0:
+            model.module.G.eval()
+
+            sample_size = min(8, opt.batchSize)
+            sample_path = os.path.join(opt.checkpoints_dir, opt.name, 'samples', 'test')
+
+            if not os.path.exists(sample_path):
+                os.mkdir(sample_path)
+
+            with torch.no_grad():
+                img_source = img_source[:sample_size]
+                latent_ID = latent_ID[:sample_size]
+
+                imgs = []
+                zero_img = (torch.zeros_like(img_source[0, ...]))
+                imgs.append(zero_img.cpu().numpy())
+                save_img = (detransformer_Arcface(img_source.cpu())).numpy()
+
+                for r in range(sample_size):
+                    imgs.append(save_img[r, ...])
+
+                for i in range(sample_size):
+                    imgs.append(save_img[i, ...])
+
+                    image_infer = img_source[i, ...].repeat(sample_size, 1, 1, 1)
+                    img_fake = model.module.G(image_infer, latent_ID)
+
+                    img_fake = detransformer_Arcface(img_fake).cpu().numpy()
+
+                    for j in range(sample_size):
+                        imgs.append(img_fake[j, ...])
+
+                print("Save test data")
+                imgs = np.stack(imgs, axis=0).transpose(0, 2, 3, 1)
+                plot_batch(imgs, os.path.join(sample_path, 'step_' + str(total_iter) + '.jpg'))
 
         # early stop
         if test_iter >= opt.max_dataset_size:
@@ -208,11 +267,6 @@ if __name__ == '__main__':
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ])
 
-    detransformer_Arcface = transforms.Compose([
-        transforms.Normalize([0, 0, 0], [1 / 0.229, 1 / 0.224, 1 / 0.225]),
-        transforms.Normalize([-0.485, -0.456, -0.406], [1, 1, 1])
-    ])
-
     if opt.fp16:
         from torch.cuda.amp import autocast
 
@@ -220,7 +274,7 @@ if __name__ == '__main__':
     train_data = VGGFace2HQDataset(opt, isTrain=True, transform=transformer_Arcface, is_same_ID=True, auto_same_ID=True)
     train_loader = DataLoader(dataset=train_data, batch_size=opt.batchSize, shuffle=True, num_workers=opt.nThreads, worker_init_fn=train_data.set_worker)
     test_data = VGGFace2HQDataset(opt, isTrain=False, transform=transformer_Arcface, is_same_ID=True, auto_same_ID=True)
-    test_loader = DataLoader(dataset=test_data, batch_size=opt.batchSize, shuffle=False, num_workers=opt.nThreads, worker_init_fn=train_data.set_worker)
+    test_loader = DataLoader(dataset=test_data, batch_size=opt.batchSize, shuffle=True, num_workers=opt.nThreads, worker_init_fn=train_data.set_worker)
     print("Dataloaders ready.")
 
     ###############################################################################
@@ -257,6 +311,10 @@ if __name__ == '__main__':
     else:
         start_epoch, epoch_iter = 1, 0
 
+    sample_path = os.path.join(opt.checkpoints_dir, opt.name, 'samples')
+    if not os.path.exists(sample_path):
+        os.mkdir(sample_path)
+
     model = create_model(opt)
 
     visualizer = Visualizer(opt)
@@ -264,7 +322,7 @@ if __name__ == '__main__':
     trainer = Trainer(train_loader, model, opt, start_epoch, epoch_iter, visualizer)
 
     for epoch_idx in range(start_epoch, opt.niter + opt.niter_decay + 1):
-        if not opt.test_only:
+        if opt.isTrain:
             epoch_start_time = time.time()
 
             # train for one epoch
