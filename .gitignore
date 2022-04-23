@@ -15,5 +15,8 @@ output/*
 output/**
 tmp
 **.pyc
+*.pyc
 **.out
+*.out
 **.jpg
+*.jpg
