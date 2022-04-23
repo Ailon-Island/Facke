@@ -20,3 +20,7 @@ tmp
 *.out
 **.jpg
 *.jpg
+*.jpg
+output/result.jpg
+output/source.jpg
+output/target.jpg
