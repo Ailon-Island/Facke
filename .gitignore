@@ -6,11 +6,13 @@ utils/Arcface/arcface_checkpoint.tar
 utils/insightface_func/models/antelope/glintr100.onnx
 datasets/*
 *.patch
+checkpoints/**
 checkpoints/*
 **/__pycache__
 **/__pycache__/*
 **/.pytest_cache
-output
+output/*
+output/**
 tmp
 **.pyc
 **.out
