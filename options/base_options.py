@@ -100,9 +100,9 @@ class BaseOptions():
             self.opt.save_latest_freq = lcm(self.opt.save_latest_freq, self.opt.batchSize)
             self.opt.display_freq_test = lcm(self.opt.display_freq_test, self.opt.batchSize)
             if self.opt.debug:
-                self.opt.display_freq = 100
-                self.opt.print_freq = 100
-                self.opt.display_freq_test = 100
+                self.opt.display_freq = 64
+                self.opt.print_freq = 64
+                self.opt.display_freq_test = 64
                 self.opt.niter = 1
                 self.opt.niter_decay = 1
                 self.opt.max_dataset_size = 4000
