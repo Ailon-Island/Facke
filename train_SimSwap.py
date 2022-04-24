@@ -232,7 +232,6 @@ def test(opt, model, loader, epoch_idx, total_iter, visualizer):
                     for j in range(sample_size):
                         imgs.append(img_fake[j, ...])
 
-                print("Save test data")
                 imgs = np.stack(imgs, axis=0).transpose(0, 2, 3, 1)
                 plot_batch(imgs, os.path.join(sample_path, 'step_' + str(total_iter) + '.jpg'))
 
