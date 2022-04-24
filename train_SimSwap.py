@@ -71,14 +71,14 @@ class Trainer:
             is_same_ID = is_same_ID[0].detach().item()
 
             ########### FORWARD ###########
-            [losses, _] = model(img_source, img_target, latent_ID, latent_ID_target)
+            [losses, _] = self.model(img_source, img_target, latent_ID, latent_ID_target)
 
             ############ LOSSES ############
             # gather losses
             losses = [torch.mean(x) if not isinstance(x, int) else x for x in losses]
 
             # loss dictionary
-            loss_dict = dict(zip(model.module.loss_names, losses))
+            loss_dict = dict(zip(self.model.module.loss_names, losses))
 
             # calculate final loss scalar
             loss_G = loss_dict['G_GAN'] + loss_dict.get('G_VGG', 0) + loss_dict.get('G_wFM', 0) + loss_dict['G_ID'] + loss_dict['G_rec'] * is_same_ID
@@ -98,7 +98,7 @@ class Trainer:
 
             # print result
             if self.total_iter % opt.print_freq == print_delta:
-                errors = dict(zip(model.module.loss_names, losses))
+                errors = dict(zip(self.model.module.loss_names, losses))
                 avg_iter_time = (time.time() - iter_start_time) / opt.print_freq
                 visualizer.print_current_errors(epoch_idx, epoch_iter, errors, avg_iter_time)
                 visualizer.plot_current_errors(errors, self.total_iter)
@@ -108,7 +108,7 @@ class Trainer:
                 if not os.path.exists(self.sample_path):
                     os.mkdir(self.sample_path)
 
-                model.module.G.eval()
+                self.model.module.G.eval()
                 with torch.no_grad():
                     img_source = img_source[:self.sample_size]
                     latent_ID = latent_ID[:self.sample_size]
@@ -125,7 +125,7 @@ class Trainer:
                         imgs.append(save_img[i, ...])
 
                         image_infer = img_source[i, ...].repeat(self.sample_size, 1, 1, 1)
-                        img_fake = model.module.G(image_infer, latent_ID).cpu().numpy()
+                        img_fake = self.model.module.G(image_infer, latent_ID).cpu().numpy()
 
                         for j in range(self.sample_size):
                             imgs.append(img_fake[j, ...])
