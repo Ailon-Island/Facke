@@ -199,7 +199,7 @@ def test(opt, model, loader, epoch_idx, total_iter, visualizer):
                 for loss_name, test_loss, loss in zip(model.module.loss_names, test_losses, losses)]
 
         # display images
-        if test_iter == 0:
+        if batch_idx == 0:
             model.module.G.eval()
 
             sample_size = min(8, opt.batchSize)
