@@ -179,6 +179,9 @@ def test(opt, model, loader, epoch_idx, total_iter, visualizer):
     for batch_idx, ((img_source, img_target), (latent_ID, latent_ID_target), is_same_ID) in enumerate(tqdm.tqdm(loader)):
         batch_size = len(is_same_ID)
         test_iter += batch_size
+        
+        if len(opt.gpu_ids):
+            img_source, img_target, latent_ID, latent_ID_target = img_source.to('cuda'), img_target.to('cuda'), latent_ID.to('cuda'), latent_ID_target.to('cuda')
 
         is_same_ID = is_same_ID[0].detach().item()
 
