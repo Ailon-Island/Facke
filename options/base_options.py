@@ -105,7 +105,8 @@ class BaseOptions():
                 self.opt.display_freq_test = 1
                 self.opt.niter = 1
                 self.opt.niter_decay = 1
-                self.opt.max_dataset_size = 10
+                self.opt.batchSize = 8
+                self.opt.max_dataset_size = 100
                 self.opt.name = 'debug'
 
         args = vars(self.opt)
