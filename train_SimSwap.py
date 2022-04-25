@@ -74,20 +74,20 @@ class Trainer:
             if len(opt.gpu_ids):
                 img_source, img_target, latent_ID, latent_ID_target = img_source.to('cuda'), img_target.to('cuda'), latent_ID.to('cuda'), latent_ID_target.to('cuda')
 
-            # for inter-epoch consistance check
+            # for inter-epoch consistence check
             if batch_idx == 1:
                 if not os.path.exists(self.sample_path):
                     os.mkdir(self.sample_path)
 
                 with torch.no_grad():
                     self.model.module.G.eval()
-                    img_source = img_source[:self.sample_size]
-                    latent_ID = latent_ID[:self.sample_size]
+                    img_source_sample = img_source[:self.sample_size]
+                    latent_ID_sample = latent_ID[:self.sample_size]
 
                     imgs = []
-                    zero_img = (torch.zeros_like(img_source[0, ...]))
+                    zero_img = (torch.zeros_like(img_source_sample[0, ...]))
                     imgs.append(zero_img.cpu().numpy())
-                    save_img = (detransformer_Arcface(img_source.cpu())).numpy()
+                    save_img = (detransformer_Arcface(img_source_sample.cpu())).numpy()
 
                     for r in range(self.sample_size):
                         imgs.append(save_img[r, ...])
@@ -95,8 +95,8 @@ class Trainer:
                     for i in range(self.sample_size):
                         imgs.append(save_img[i, ...])
 
-                        image_infer = img_source[i, ...].repeat(self.sample_size, 1, 1, 1)
-                        img_fake = self.model.module.G(image_infer, latent_ID).cpu().numpy()
+                        image_infer = img_source_sample[i, ...].repeat(self.sample_size, 1, 1, 1)
+                        img_fake = self.model.module.G(image_infer, latent_ID_sample).cpu().numpy()
 
                         for j in range(self.sample_size):
                             imgs.append(img_fake[j, ...])
