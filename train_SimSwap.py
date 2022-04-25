@@ -100,7 +100,7 @@ class Trainer:
             if self.total_iter % opt.display_freq == display_delta:
                 if not os.path.exists(self.sample_path):
                     os.mkdir(self.sample_path)
-                    
+
                 with torch.no_grad():
                     self.model.module.G.eval()
                     img_source = img_source[:self.sample_size]
@@ -390,6 +390,8 @@ if __name__ == '__main__':
             # lr decay
             if epoch_idx > opt.niter:
                 model.module.update_lr()
+                if opt.verbose:
+                    print('Learning rate has been changed to {}.'.format(model.module.old_lr))
 
         # test model
         test(opt, model, test_loader, epoch_idx, trainer.total_iter, visualizer)

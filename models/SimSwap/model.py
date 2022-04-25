@@ -174,7 +174,7 @@ class SimSwapGAN(ModelBase):
 
 
     def update_lr(self):
-        lr_decay = self.opt.lr / self.opt.niter_decay
+        lr_decay = self.opt.lr / (self.opt.niter_decay + 1)
         lr = self.old_lr - lr_decay
 
         for param_group in self.optim_D.param_groups:
