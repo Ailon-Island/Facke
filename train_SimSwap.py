@@ -54,7 +54,7 @@ class Trainer:
         if opt.verbose:
             print('Training...')
         if opt.debug:
-            print('Model instance in trainer iter: {}.'.format(self.model.module.iter))
+            print('Model instance to be trained iter: {}.'.format(self.model.module.iter))
         self.model.train()
 
         epoch_start_time = time.time()
@@ -65,6 +65,9 @@ class Trainer:
         save_delta = self.total_iter % opt.save_latest_freq
 
         for batch_idx, ((img_source, img_target), (latent_ID, latent_ID_target), is_same_ID) in enumerate(self.loader):
+            if opt.debug:
+                print('Batch {}: model instance to be trained iter: {}.'.format(batch_idx, self.model.module.iter))
+
             if self.total_iter % opt.print_freq == print_delta:
                 iter_start_time = time.time()
 
