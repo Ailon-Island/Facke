@@ -64,7 +64,7 @@ class Trainer:
         print_delta = self.total_iter % opt.print_freq
         save_delta = self.total_iter % opt.save_latest_freq
 
-        for batch_idx, ((img_source, img_target), (latent_ID, latent_ID_target), is_same_ID) in enumerate(self.loader):
+        for batch_idx, ((img_source, img_target), (latent_ID, latent_ID_target), is_same_ID) in enumerate(self.loader, start=1):
             if opt.debug:
                 print('Batch {}: model instance to be trained iter: {}.'.format(batch_idx, self.model.module.iter))
 
@@ -74,33 +74,11 @@ class Trainer:
             if len(opt.gpu_ids):
                 img_source, img_target, latent_ID, latent_ID_target = img_source.to('cuda'), img_target.to('cuda'), latent_ID.to('cuda'), latent_ID_target.to('cuda')
 
-            batch_size = len(is_same_ID)
-            self.total_iter += batch_size
-            self.model.module.iter = self.total_iter
-            epoch_iter += batch_size
-
-            if opt.ID_check:
-                print(is_same_ID)
-            is_same_ID = is_same_ID[0].detach().item()
-
-            ########### FORWARD ###########
-            [losses, _] = self.model(img_source, img_target, latent_ID, latent_ID_target)
-
-            ############ LOSSES ############
-            # gather losses
-            losses = [torch.mean(x) if not isinstance(x, int) else x for x in losses]
-
-            # loss dictionary
-            loss_dict = dict(zip(self.model.module.loss_names, losses))
-
-            # calculate final loss scalar
-            loss_G = loss_dict['G_GAN'] + loss_dict.get('G_VGG', 0) + loss_dict.get('G_wFM', 0) + loss_dict['G_ID'] + loss_dict['G_rec'] * is_same_ID
-            loss_D = (loss_dict['D_fake'] + loss_dict['D_real']) + loss_dict['D_GP']
-
-            if self.total_iter % opt.display_freq == display_delta:
+            # for inter-epoch consistance check
+            if batch_idx == 1:
                 if not os.path.exists(self.sample_path):
                     os.mkdir(self.sample_path)
-                    
+
                 with torch.no_grad():
                     self.model.module.G.eval()
                     img_source = img_source[:self.sample_size]
@@ -123,9 +101,33 @@ class Trainer:
                         for j in range(self.sample_size):
                             imgs.append(img_fake[j, ...])
 
-                    print("Save test data for iter {}.".format(self.total_iter))
+                    print("Save test data before epoch {}.".format(epoch_idx))
                     imgs = np.stack(imgs, axis=0).transpose(0, 2, 3, 1)
                     plot_batch(imgs, os.path.join(self.sample_path, 'before_step_' + str(self.total_iter) + '.jpg'))
+
+            # count iterations
+            batch_size = len(is_same_ID)
+            self.total_iter += batch_size
+            self.model.module.iter = self.total_iter
+            epoch_iter += batch_size
+
+            if opt.ID_check:
+                print(is_same_ID)
+            is_same_ID = is_same_ID[0].detach().item()
+
+            ########### FORWARD ###########
+            [losses, _] = self.model(img_source, img_target, latent_ID, latent_ID_target)
+
+            ############ LOSSES ############
+            # gather losses
+            losses = [torch.mean(x) if not isinstance(x, int) else x for x in losses]
+
+            # loss dictionary
+            loss_dict = dict(zip(self.model.module.loss_names, losses))
+
+            # calculate final loss scalar
+            loss_G = loss_dict['G_GAN'] + loss_dict.get('G_VGG', 0) + loss_dict.get('G_wFM', 0) + loss_dict['G_ID'] + loss_dict['G_rec'] * is_same_ID
+            loss_D = (loss_dict['D_fake'] + loss_dict['D_real']) + loss_dict['D_GP']
 
             ############ BACKWARD ############
             self.model.module.optim_G.zero_grad()
@@ -390,6 +392,8 @@ if __name__ == '__main__':
             # lr decay
             if epoch_idx > opt.niter:
                 model.module.update_lr()
+                if opt.verbose:
+                    print('Learning rate has been changed to {}.'.format(model.module.old_lr))
 
         # test model
         test(opt, model, test_loader, epoch_idx, trainer.total_iter, visualizer)
