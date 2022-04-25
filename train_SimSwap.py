@@ -43,13 +43,22 @@ class Trainer:
         self.sample_path = os.path.join(opt.checkpoints_dir, opt.name, 'samples', 'train')
         self.sample_size = min(8, opt.batchSize)
 
+        if opt.verbose:
+            print('Trainer initialized.')
+        if opt.debug:
+            print('Model instance in trainer id: {}.'.format(id(self.model)))
 
     def train(self, epoch_idx):
+        opt = self.opt
+
+        if opt.verbose:
+            print('Training...')
+        if opt.debug:
+            print('Model instance in trainer id: {}.'.format(id(self.model)))
         self.model.train()
 
         epoch_start_time = time.time()
         epoch_iter = self.start_epoch_iter if epoch_idx == self.start_epoch else 0
-        opt = self.opt
         visualizer = self.visualizer
         display_delta = self.total_iter % opt.display_freq
         print_delta = self.total_iter % opt.print_freq
@@ -314,6 +323,8 @@ if __name__ == '__main__':
         os.mkdir(sample_path)
 
     model = create_model(opt)
+    if opt.debug:
+        print('Model instance id: {}.'.format(id(model)))
 
     visualizer = Visualizer(opt)
 
