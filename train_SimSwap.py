@@ -97,6 +97,36 @@ class Trainer:
             loss_G = loss_dict['G_GAN'] + loss_dict.get('G_VGG', 0) + loss_dict.get('G_wFM', 0) + loss_dict['G_ID'] + loss_dict['G_rec'] * is_same_ID
             loss_D = (loss_dict['D_fake'] + loss_dict['D_real']) + loss_dict['D_GP']
 
+            if self.total_iter % opt.display_freq == display_delta:
+                if not os.path.exists(self.sample_path):
+                    os.mkdir(self.sample_path)
+                    
+                with torch.no_grad():
+                    self.model.module.G.eval()
+                    img_source = img_source[:self.sample_size]
+                    latent_ID = latent_ID[:self.sample_size]
+
+                    imgs = []
+                    zero_img = (torch.zeros_like(img_source[0, ...]))
+                    imgs.append(zero_img.cpu().numpy())
+                    save_img = (detransformer_Arcface(img_source.cpu())).numpy()
+
+                    for r in range(self.sample_size):
+                        imgs.append(save_img[r, ...])
+
+                    for i in range(self.sample_size):
+                        imgs.append(save_img[i, ...])
+
+                        image_infer = img_source[i, ...].repeat(self.sample_size, 1, 1, 1)
+                        img_fake = self.model.module.G(image_infer, latent_ID).cpu().numpy()
+
+                        for j in range(self.sample_size):
+                            imgs.append(img_fake[j, ...])
+
+                    print("Save test data for iter {}.".format(self.total_iter))
+                    imgs = np.stack(imgs, axis=0).transpose(0, 2, 3, 1)
+                    plot_batch(imgs, os.path.join(self.sample_path, 'before_step_' + str(self.total_iter) + '.jpg'))
+
             ############ BACKWARD ############
             self.model.module.optim_G.zero_grad()
             loss_G.backward()
