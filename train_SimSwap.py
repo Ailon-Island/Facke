@@ -390,7 +390,7 @@ if __name__ == '__main__':
                 np.savetxt(iter_path, (epoch_idx + 1, 0), delimiter=',', fmt='%d')
 
             # lr decay
-            if epoch_idx > opt.niter:
+            if epoch_idx >= opt.niter:
                 model.module.update_lr()
                 if opt.verbose:
                     print('Learning rate has been changed to {}.'.format(model.module.old_lr))
