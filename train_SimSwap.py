@@ -43,13 +43,22 @@ class Trainer:
         self.sample_path = os.path.join(opt.checkpoints_dir, opt.name, 'samples', 'train')
         self.sample_size = min(8, opt.batchSize)
 
+        if opt.verbose:
+            print('Trainer initialized.')
+        if opt.debug:
+            print('Model instance in trainer iter: {}.'.format(self.model.module.iter))
 
     def train(self, epoch_idx):
+        opt = self.opt
+
+        if opt.verbose:
+            print('Training...')
+        if opt.debug:
+            print('Model instance in trainer iter: {}.'.format(self.model.module.iter))
         self.model.train()
 
         epoch_start_time = time.time()
         epoch_iter = self.start_epoch_iter if epoch_idx == self.start_epoch else 0
-        opt = self.opt
         visualizer = self.visualizer
         display_delta = self.total_iter % opt.display_freq
         print_delta = self.total_iter % opt.print_freq
@@ -64,6 +73,7 @@ class Trainer:
 
             batch_size = len(is_same_ID)
             self.total_iter += batch_size
+            self.model.module.iter = self.total_iter
             epoch_iter += batch_size
 
             if opt.ID_check:
@@ -176,6 +186,8 @@ def test(opt, model, loader, epoch_idx, total_iter, visualizer):
     imgs_fake = []
 
     print('Testing...')
+    if opt.debug:
+        print('Model instance being tested iter: {}.'.format(model.module.iter))
     for batch_idx, ((img_source, img_target), (latent_ID, latent_ID_target), is_same_ID) in enumerate(tqdm.tqdm(loader)):
         batch_size = len(is_same_ID)
         test_iter += batch_size
@@ -314,6 +326,8 @@ if __name__ == '__main__':
         os.mkdir(sample_path)
 
     model = create_model(opt)
+    if opt.debug:
+        print('Model instance iter: {}.'.format(model.module.iter))
 
     visualizer = Visualizer(opt)
 

@@ -34,7 +34,7 @@ class BaseOptions():
         self.parser.add_argument('--isTrain', type=bool, default=True, help='local rank for distributed training')
 
         # input/output sizes       
-        self.parser.add_argument('--batchSize', type=int, default=8, help='input batch size')
+        self.parser.add_argument('--batchSize', type=int, default=2, help='input batch size')
         self.parser.add_argument('--loadSize', type=int, default=1024, help='scale images to this size')
         self.parser.add_argument('--fineSize', type=int, default=512, help='then crop to this size')
         self.parser.add_argument('--label_nc', type=int, default=0, help='# of input label channels')
@@ -99,14 +99,17 @@ class BaseOptions():
             self.opt.display_freq = lcm(self.opt.display_freq, self.opt.batchSize)
             self.opt.save_latest_freq = lcm(self.opt.save_latest_freq, self.opt.batchSize)
             self.opt.display_freq_test = lcm(self.opt.display_freq_test, self.opt.batchSize)
+
             if self.opt.debug:
-                self.opt.display_freq = 64
-                self.opt.print_freq = 64
-                self.opt.display_freq_test = 64
+                self.opt.display_freq = 1
+                self.opt.print_freq = 1
+                self.opt.display_freq_test = 1
                 self.opt.niter = 1
                 self.opt.niter_decay = 1
-                self.opt.max_dataset_size = 4000
+                self.opt.batchSize = 2
+                self.opt.max_dataset_size = 10
                 self.opt.name = 'debug'
+                self.opt.verbose = True
 
         args = vars(self.opt)
 

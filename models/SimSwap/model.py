@@ -26,6 +26,8 @@ class SimSwapGAN(ModelBase):
         self.isTrain = opt.isTrain
         self.gpu_ids = opt.gpu_ids
 
+        self.iter = 0
+
         device = torch.device(self.gpu_ids[0])
 
         # Generator
