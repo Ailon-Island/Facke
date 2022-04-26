@@ -10,7 +10,7 @@ from utils import utils
 from utils.IDExtract import IDExtractor
 
 class VGGFace2HQDataset(DatasetBase):
-    def __init__(self, opt, isTrain=True, transform=None, is_same_ID=True, auto_same_ID=True):  #isTrain=True, data_dir='datasets\\VGGface2_HQ', is_same_ID=True, transform=None):
+    def __init__(self, opt, isTrain=True, transform=None, is_same_ID=True, auto_same_ID=True, random_seed=1234):  #isTrain=True, data_dir='datasets\\VGGface2_HQ', is_same_ID=True, transform=None):
         #print('Dataset initiated!')
         self.opt = opt
         set = 'train' if isTrain else 'test'
@@ -27,6 +27,8 @@ class VGGFace2HQDataset(DatasetBase):
         for i, target in enumerate(self.dataset.targets):
             self.label_ranges[target] = min(self.label_ranges[target], i)
         self.ID_extract = None
+
+        random.seed(random_seed)
 
 
     def toggle_is_same_ID(self):
