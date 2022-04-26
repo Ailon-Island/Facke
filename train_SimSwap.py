@@ -30,18 +30,18 @@ detransformer_Arcface = transforms.Compose([
 class Trainer:
     def __init__(self, loader, model, opt, start_epoch, epoch_iter, visualizer):
         super(Trainer, self).__init__()
-        self.model = model
-        self.opt = opt
-        self.loader = loader
-        self.losses = []
-        self.start_epoch = start_epoch
-        self.start_epoch_iter = epoch_iter
-        self.total_iter = (start_epoch - 1) * len(loader) + epoch_iter
-        self.memory_last = 0
-        self.memory_first = None
-        self.visualizer = visualizer
-        self.sample_path = os.path.join(opt.checkpoints_dir, opt.name, 'samples', 'train')
-        self.sample_size = min(8, opt.batchSize)
+        self.model              = model
+        self.opt                = opt
+        self.loader             = loader
+        self.losses             = []
+        self.start_epoch        = start_epoch
+        self.start_epoch_iter   = epoch_iter
+        self.total_iter         = (start_epoch - 1) * len(loader) + epoch_iter
+        self.memory_last        = 0
+        self.memory_first       = None
+        self.visualizer         = visualizer
+        self.sample_path        = os.path.join(opt.checkpoints_dir, opt.name, 'samples', 'train')
+        self.sample_size        = min(8, opt.batchSize)
 
         if opt.verbose:
             print('Trainer initialized.')
@@ -58,11 +58,11 @@ class Trainer:
         self.model.train()
 
         epoch_start_time = time.time()
-        epoch_iter = self.start_epoch_iter if epoch_idx == self.start_epoch else 0
-        visualizer = self.visualizer
-        display_delta = self.total_iter % opt.display_freq
-        print_delta = self.total_iter % opt.print_freq
-        save_delta = self.total_iter % opt.save_latest_freq
+        epoch_iter      = self.start_epoch_iter if epoch_idx == self.start_epoch else 0
+        visualizer      = self.visualizer
+        display_delta   = self.total_iter % opt.display_freq
+        print_delta     = self.total_iter % opt.print_freq
+        save_delta      = self.total_iter % opt.save_latest_freq
 
         for batch_idx, ((img_source, img_target), (latent_ID, latent_ID_target), is_same_ID) in enumerate(self.loader, start=1):
             if opt.debug:
@@ -106,10 +106,10 @@ class Trainer:
                     plot_batch(imgs, os.path.join(self.sample_path, 'before_step_' + str(self.total_iter) + '.jpg'))
 
             # count iterations
-            batch_size = len(is_same_ID)
-            self.total_iter += batch_size
-            self.model.module.iter = self.total_iter
-            epoch_iter += batch_size
+            batch_size              = len(is_same_ID)
+            self.total_iter        += batch_size
+            self.model.module.iter  = self.total_iter
+            epoch_iter             += batch_size
 
             if opt.ID_check:
                 print(is_same_ID)
@@ -299,6 +299,7 @@ def test(opt, model, loader, epoch_idx, total_iter, visualizer):
 
 if __name__ == '__main__':
     warnings.filterwarnings("ignore")
+    torch.backends.cudnn.benchmark = True
 
     opt = TrainOptions().parse()
 
