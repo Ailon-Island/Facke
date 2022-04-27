@@ -237,11 +237,6 @@ def test(opt, model, loader, epoch_idx, total_iter, visualizer):
         
         # gather losses
         losses = [torch.mean(x) if not isinstance(x, int) else x for x in losses]
-
-        # clear the graph
-        loss_sum = sum(losses)
-        loss_sum.backward()
-
         losses = [loss.detach().cpu().item() for loss in losses]
 
         # save loss
