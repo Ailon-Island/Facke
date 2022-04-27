@@ -322,6 +322,7 @@ if __name__ == '__main__':
     test_data = VGGFace2HQDataset(opt, isTrain=False, transform=transformer_Arcface, is_same_ID=True, auto_same_ID=True)
     test_loader = DataLoader(dataset=test_data, batch_size=opt.batchSize, shuffle=True, num_workers=opt.nThreads, worker_init_fn=train_data.set_worker)
     print("Dataloaders ready.")
+    opt.max_dataset_size = min(opt.max_dataset_size, len(train_data))
 
     ###############################################################################
     # Code from
@@ -370,6 +371,9 @@ if __name__ == '__main__':
     trainer = Trainer(train_loader, model, opt, start_epoch, epoch_iter, visualizer)
 
     for epoch_idx in range(start_epoch, opt.niter + opt.niter_decay + 1):
+        # test model
+        test(opt, model, test_loader, epoch_idx, trainer.total_iter, visualizer)
+
         if opt.isTrain:
             epoch_start_time = time.time()
 
@@ -396,8 +400,8 @@ if __name__ == '__main__':
                 if opt.verbose:
                     print('Learning rate has been changed to {}.'.format(model.module.old_lr))
 
-        # test model
-        test(opt, model, test_loader, epoch_idx, trainer.total_iter, visualizer)
+    # final test
+    test(opt, model, test_loader, epoch_idx, trainer.total_iter, visualizer)
 
 
 
