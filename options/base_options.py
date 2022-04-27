@@ -107,7 +107,8 @@ class BaseOptions():
                 self.opt.niter = 1
                 self.opt.niter_decay = 1
                 self.opt.batchSize = 4
-                self.opt.max_dataset_size = 20
+                if self.opt.max_dataset_size == float("inf"):
+                    self.opt.max_dataset_size = 20
                 self.opt.name = 'debug'
                 self.opt.verbose = True
 
