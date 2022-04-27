@@ -153,7 +153,7 @@ class Trainer:
                 if not os.path.exists(self.sample_path):
                     os.mkdir(self.sample_path)
 
-                self.model.module.G.eval()
+                self.model.eval()
                 with torch.no_grad():
                     img_source = img_source[:self.sample_size]
                     latent_ID = latent_ID[:self.sample_size]
@@ -170,7 +170,7 @@ class Trainer:
                         imgs.append(save_img[i, ...])
 
                         image_infer = img_source[i, ...].repeat(self.sample_size, 1, 1, 1)
-                        img_fake = self.model.module.G(image_infer, latent_ID).cpu().numpy()
+                        img_fake = self.model(None, image_infer, latent_ID, None).cpu().numpy()
 
                         for j in range(self.sample_size):
                             imgs.append(img_fake[j, ...])
@@ -237,6 +237,11 @@ def test(opt, model, loader, epoch_idx, total_iter, visualizer):
         
         # gather losses
         losses = [torch.mean(x) if not isinstance(x, int) else x for x in losses]
+
+        # clear the graph
+        loss_sum = sum(losses)
+        loss_sum.backward()
+
         losses = [loss.detach().cpu().item() for loss in losses]
 
         # save loss
@@ -250,8 +255,6 @@ def test(opt, model, loader, epoch_idx, total_iter, visualizer):
 
         # display images
         if batch_idx == 0:
-            model.module.G.eval()
-
             sample_size = min(8, opt.batchSize)
             sample_path = os.path.join(opt.checkpoints_dir, opt.name, 'samples', 'test')
 
@@ -274,7 +277,7 @@ def test(opt, model, loader, epoch_idx, total_iter, visualizer):
                     imgs.append(save_img[i, ...])
 
                     image_infer = img_source[i, ...].repeat(sample_size, 1, 1, 1)
-                    img_fake = model.module.G(image_infer, latent_ID).cpu().numpy()
+                    img_fake = model.(None, image_infer, latent_ID, None).cpu().numpy()
 
                     for j in range(sample_size):
                         imgs.append(img_fake[j, ...])
