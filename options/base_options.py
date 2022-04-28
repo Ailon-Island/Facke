@@ -101,14 +101,14 @@ class BaseOptions():
             self.opt.display_freq_test = lcm(self.opt.display_freq_test, self.opt.batchSize)
 
             if self.opt.debug:
-                self.opt.display_freq = 1
+                self.opt.display_freq = 1000
                 self.opt.print_freq = 1
                 self.opt.display_freq_test = 1
                 self.opt.niter = 1
                 self.opt.niter_decay = 1
-                self.opt.batchSize = 4
+                self.opt.batchSize = 8
                 if self.opt.max_dataset_size == float("inf"):
-                    self.opt.max_dataset_size = 20
+                    self.opt.max_dataset_size = 5000
                 self.opt.name = 'debug'
                 self.opt.verbose = True
 
