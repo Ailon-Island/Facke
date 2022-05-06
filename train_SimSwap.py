@@ -48,6 +48,7 @@ class Trainer:
         if opt.debug:
             print('Model instance in trainer iter: {}.'.format(self.model.module.iter))
 
+
     def train(self, epoch_idx):
         opt = self.opt
 
@@ -55,7 +56,6 @@ class Trainer:
             print('Training...')
         if opt.debug:
             print('Model instance to be trained iter: {}.'.format(self.model.module.iter))
-        self.model.train()
 
         epoch_start_time = time.time()
         epoch_iter      = self.start_epoch_iter if epoch_idx == self.start_epoch else 0
@@ -65,6 +65,7 @@ class Trainer:
         save_delta      = self.total_iter % opt.save_latest_freq
 
         for batch_idx, ((img_source, img_target), (latent_ID, latent_ID_target), is_same_ID) in enumerate(self.loader, start=1):
+            self.model.train()
             if opt.debug:
                 print('Batch {}: model instance to be trained iter: {}.'.format(batch_idx, self.model.module.iter))
 
@@ -73,37 +74,6 @@ class Trainer:
 
             if len(opt.gpu_ids):
                 img_source, img_target, latent_ID, latent_ID_target = img_source.to('cuda'), img_target.to('cuda'), latent_ID.to('cuda'), latent_ID_target.to('cuda')
-
-            # for inter-epoch consistence check
-            if batch_idx == 1:
-                if not os.path.exists(self.sample_path):
-                    os.mkdir(self.sample_path)
-
-                with torch.no_grad():
-                    self.model.module.G.eval()
-                    img_source_sample = img_source[:self.sample_size]
-                    latent_ID_sample = latent_ID[:self.sample_size]
-
-                    imgs = []
-                    zero_img = (torch.zeros_like(img_source_sample[0, ...]))
-                    imgs.append(zero_img.cpu().numpy())
-                    save_img = (detransformer_Arcface(img_source_sample.cpu())).numpy()
-
-                    for r in range(self.sample_size):
-                        imgs.append(save_img[r, ...])
-
-                    for i in range(self.sample_size):
-                        imgs.append(save_img[i, ...])
-
-                        image_infer = img_source_sample[i, ...].repeat(self.sample_size, 1, 1, 1)
-                        img_fake = self.model.module.G(image_infer, latent_ID_sample).cpu().numpy()
-
-                        for j in range(self.sample_size):
-                            imgs.append(img_fake[j, ...])
-
-                    print("Save test data before epoch {}.".format(epoch_idx))
-                    imgs = np.stack(imgs, axis=0).transpose(0, 2, 3, 1)
-                    plot_batch(imgs, os.path.join(self.sample_path, 'before_step_' + str(self.total_iter) + '.jpg'))
 
             # count iterations
             batch_size              = len(is_same_ID)
@@ -116,7 +86,7 @@ class Trainer:
             is_same_ID = is_same_ID[0].detach().item()
 
             ########### FORWARD ###########
-            [losses, _] = self.model(img_source, img_target, latent_ID, latent_ID_target)
+            [losses, _] = model(img_source, img_target, latent_ID, latent_ID_target)
 
             ############ LOSSES ############
             # gather losses
@@ -178,9 +148,9 @@ class Trainer:
                     print("Save test data for iter {}.".format(self.total_iter))
                     imgs = np.stack(imgs, axis=0).transpose(0, 2, 3, 1)
                     plot_batch(imgs, os.path.join(self.sample_path, 'step_' + str(self.total_iter) + '.jpg'))
-                    
-                    
-                    
+
+
+
                 # visuals = OrderedDict([('source_img', utils.tensor2im(img_target[0])),
                 #                        ('id_img', utils.tensor2im(img_source[0])),
                 #                        ('generated_img', utils.tensor2im(img_fake.data[0]))
@@ -216,10 +186,6 @@ def test(opt, model, loader, epoch_idx, total_iter, visualizer):
 
     test_losses = []
 
-    imgs_source = []
-    imgs_target = []
-    imgs_fake = []
-
     print('Testing...')
     if opt.debug:
         print('Model instance being tested iter: {}.'.format(model.module.iter))
@@ -250,8 +216,6 @@ def test(opt, model, loader, epoch_idx, total_iter, visualizer):
 
         # display images
         if batch_idx == 0:
-            model.module.G.eval()
-
             sample_size = min(8, opt.batchSize)
             sample_path = os.path.join(opt.checkpoints_dir, opt.name, 'samples', 'test')
 
@@ -322,6 +286,7 @@ if __name__ == '__main__':
     test_data = VGGFace2HQDataset(opt, isTrain=False, transform=transformer_Arcface, is_same_ID=True, auto_same_ID=True)
     test_loader = DataLoader(dataset=test_data, batch_size=opt.batchSize, shuffle=True, num_workers=opt.nThreads, worker_init_fn=train_data.set_worker)
     print("Dataloaders ready.")
+    opt.max_dataset_size = min(opt.max_dataset_size, len(train_data))
 
     ###############################################################################
     # Code from
@@ -395,6 +360,7 @@ if __name__ == '__main__':
                 model.module.update_lr()
                 if opt.verbose:
                     print('Learning rate has been changed to {}.'.format(model.module.old_lr))
+
 
         # test model
         test(opt, model, test_loader, epoch_idx, trainer.total_iter, visualizer)
