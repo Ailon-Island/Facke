@@ -1,5 +1,5 @@
 #! /bin/bash
-#SBATCH -J Facke_oFM
+#SBATCH -J Facke_wbFM
 #SBATCH -p gpu
 #SBATCH -N 1
 #SBATCH -o log.out
@@ -7,4 +7,4 @@
 #SBATCH --gres=gpu:2
 module load anaconda3/2019.07
 source activate pytorch_1.11
-python -u ./train_SimSwap.py --batchSize 32 --nThreads 32 --name SimSwap_oFM --feat_mode o
+python -u ./train_SimSwap.py --batchSize 32 --nThreads 32 --name SimSwap_wbFM --feat_mode w*
