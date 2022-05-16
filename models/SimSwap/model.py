@@ -94,7 +94,7 @@ class SimSwapGAN(ModelBase):
     def forward(self, img_source, img_target, latent_ID, latent_ID_target):
         # loss initialization
         loss_D_real, loss_D_fake, loss_D_GP = 0, 0, 0
-        loss_G_GAN, loss_G_FM, loss_G_ID, loss_G_rec =  0, torch.Tensor(0), 0, 0
+        loss_G_GAN, loss_G_FM, loss_G_ID, loss_G_rec =  0, 0, 0, 0
 
         # generate fake image
         img_fake = self.G.forward(img_target, latent_ID)
@@ -140,6 +140,8 @@ class SimSwapGAN(ModelBase):
         if not self.opt.no_ganFeat_loss:
             loss_G_FM = self.FMloss([feat_D_real, feat_D_fake])
             loss_G_FM *= self.opt.lambda_FM
+        else:
+            loss_G_FM = loss_G_ID * 0 # whatever, get a zero tensor
 
         # G ID
         latent_ID_fake = self.ID_extract(img_fake)
