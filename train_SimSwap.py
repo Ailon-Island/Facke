@@ -110,7 +110,7 @@ class Trainer:
             self.model.module.optim_D.step()
 
             # save loss
-            losses = [loss.detach().cpu().item() for loss in losses]
+            losses = [loss if isinstance(loss, int) else loss.detach().cpu().item() for loss in losses]
             self.losses += [losses]
 
             # print result
