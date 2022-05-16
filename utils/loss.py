@@ -154,7 +154,6 @@ class FMLoss(nn.Module):
         loss = 0
         for (feat_D_real, feat_D_fake) in zip(*feat):
             for (feat_layer_real, feat_layer_fake) in zip(feat_D_real[self.feat_left:self.feat_right], feat_D_fake[self.feat_left:self.feat_right]):
-                print(feat_layer_real.shape)
                 loss += self.diff(feat_layer_real.detach(), feat_layer_fake)
         loss = self.feat_weight * self.D_weight * loss
 
