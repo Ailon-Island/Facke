@@ -3,6 +3,13 @@ from torch import nn
 import torch.nn.functional as F
 from torch.autograd import Variable
 
+def get_loss_dict(names, losses, opt):
+    loss_dict = dict(zip(names, losses))
+    if opt.no_ganFeat_loss:
+        loss_dict.pop('G_FM')
+
+    return loss_dict
+
 class GANLoss(nn.Module):
     def __init__(self, gan_mode, real_label=1., fake_label=0., Tensor=torch.FloatTensor, opt=None):
         super(GANLoss, self).__init__()
@@ -121,19 +128,33 @@ class GPLoss(nn.Module):
     
     
     
-class WFMLoss(nn.Module):
-    def __init__(self, num_layers, num_D):
-        super(WFMLoss, self).__init__()
+class FMLoss(nn.Module):
+    def __init__(self, opt):
+        super(FMLoss, self).__init__()
 
-        self.feat_weight = 4. / (num_layers + 1)
-        self.D_weight = 1. / num_D
+        if opt.feat_mode == "w":
+            self.feat_left = 1
+            self.feat_right = -1
+        elif opt.feat_mode == "o":
+            self.feat_left = 0
+            self.feat_right = -1
+        elif opt.feat_mode == "w*":
+            self.feat_left = 0
+            self.feat_right = -2
+        # self.feat_weight = 4. / (opt.n_layers_D + 1)
+        self.feat_weight = None
+        self.D_weight = 1. / opt.num_D
         self.diff = nn.L1Loss()
 
 
     def forward(self, feat):
+        if self.feat_weight is None:
+            self.feat_weight = 4. / (len(feat[0][0]) + self.feat_right - self.feat_left)
+
         loss = 0
         for (feat_D_real, feat_D_fake) in zip(*feat):
-            for (feat_layer_real, feat_layer_fake) in zip(feat_D_real[:-1], feat_D_fake[:-1]):
+            for (feat_layer_real, feat_layer_fake) in zip(feat_D_real[self.feat_left:self.feat_right], feat_D_fake[self.feat_left:self.feat_right]):
+                print(feat_layer_real.shape)
                 loss += self.diff(feat_layer_real.detach(), feat_layer_fake)
         loss = self.feat_weight * self.D_weight * loss
 

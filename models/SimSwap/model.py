@@ -69,12 +69,13 @@ class SimSwapGAN(ModelBase):
             self.load_net(self.D2, 'D2', opt.epoch_label, pretrained_path)
 
         # loss functions
-        self.loss_names = ['D_real', 'D_fake', 'D_GP', 'G_GAN', 'G_wFM', 'G_ID', 'G_rec']
+        self.loss_names = ['D_real', 'D_fake', 'D_GP', 'G_GAN', 'G_FM', 'G_ID', 'G_rec']
         self.IDloss = loss.IDLoss()
         self.Recloss = nn.L1Loss()
         self.GANloss = loss.GANLoss(opt.gan_mode, Tensor=self.Tensor, opt=opt)
         self.GPloss = loss.GPLoss()
-        self.wFMloss = loss.WFMLoss(opt.n_layers_D, opt.num_D)
+        if not opt.no_ganFeat_loss:
+            self.FMloss = loss.FMLoss( opt)
 
         # optimizers
         params = list(self.G.parameters())
@@ -93,7 +94,7 @@ class SimSwapGAN(ModelBase):
     def forward(self, img_source, img_target, latent_ID, latent_ID_target):
         # loss initialization
         loss_D_real, loss_D_fake, loss_D_GP = 0, 0, 0
-        loss_G_GAN, loss_G_wFM, loss_G_ID, loss_G_rec =  0, 0, 0, 0
+        loss_G_GAN, loss_G_FM, loss_G_ID, loss_G_rec =  0, 0, 0, 0
 
         # generate fake image
         img_fake = self.G.forward(img_target, latent_ID)
@@ -136,8 +137,9 @@ class SimSwapGAN(ModelBase):
         loss_G_GAN = self.GANloss(pred_D_fake, is_real=True, forD=False)
 
         # G GAN weak feat match
-        loss_G_wFM = self.wFMloss([feat_D_real, feat_D_fake])
-        loss_G_wFM *= self.opt.lambda_wFM
+        if not self.opt.no_ganFeat_loss:
+            loss_G_FM = self.FMloss([feat_D_real, feat_D_fake])
+            loss_G_FM *= self.opt.lambda_FM
 
         # G ID
         latent_ID_fake = self.ID_extract(img_fake)
@@ -150,10 +152,10 @@ class SimSwapGAN(ModelBase):
         loss_G_rec *= self.opt.lambda_rec
 
         if self.training:
-            return [[loss_D_real, loss_D_fake, loss_D_GP, loss_G_GAN, loss_G_wFM, loss_G_ID, loss_G_rec], img_fake]
+            return [[loss_D_real, loss_D_fake, loss_D_GP, loss_G_GAN, loss_G_FM, loss_G_ID, loss_G_rec], img_fake]
         else:
-            return [[loss_D_real.detach(), loss_D_fake.detach(), loss_D_GP.detach(), loss_G_GAN.detach(), loss_G_wFM.detach(), loss_G_ID.detach(), loss_G_rec.detach()], img_fake.detach()]
-        # self.loss_names = ['D_real', 'D_fake', 'D_GP', 'G_GAN', 'G_wFM', 'G_ID', 'G_rec']
+            return [[loss_D_real.detach(), loss_D_fake.detach(), loss_D_GP.detach(), loss_G_GAN.detach(), loss_G_FM.detach(), loss_G_ID.detach(), loss_G_rec.detach()], img_fake.detach()]
+        # self.loss_names = ['D_real', 'D_fake', 'D_GP', 'G_GAN', 'G_FM', 'G_ID', 'G_rec']
 
 
     def save(self, epoch_label):

@@ -12,6 +12,7 @@ from models.models import create_model
 from data.VGGface2HQ import VGGFace2HQDataset, ComposedLoader
 from utils.visualizer import Visualizer
 from utils import utils
+from utils.loss import get_loss_dict
 from utils.plot import plot_batch
 from collections import OrderedDict
 import time
@@ -93,10 +94,11 @@ class Trainer:
             losses = [torch.mean(x) if not isinstance(x, int) else x for x in losses]
 
             # loss dictionary
-            loss_dict = dict(zip(self.model.module.loss_names, losses))
+            # loss_dict = dict(zip(self.model.module.loss_names, losses))
+            loss_dict = get_loss_dict(self.model.module.loss_names, losses, opt)
 
             # calculate final loss scalar
-            loss_G = loss_dict['G_GAN'] + loss_dict.get('G_VGG', 0) + loss_dict.get('G_wFM', 0) + loss_dict['G_ID'] + loss_dict['G_rec'] * is_same_ID
+            loss_G = loss_dict['G_GAN'] + loss_dict.get('G_VGG', 0) + loss_dict.get('G_FM', 0) + loss_dict['G_ID'] + loss_dict['G_rec'] * is_same_ID
             loss_D = (loss_dict['D_fake'] + loss_dict['D_real']) + loss_dict['D_GP']
 
             ############ BACKWARD ############
@@ -113,7 +115,7 @@ class Trainer:
 
             # print result
             if self.total_iter % opt.print_freq == print_delta:
-                errors = dict(zip(self.model.module.loss_names, losses))
+                errors = get_loss_dict(self.model.module.loss_names, losses, opt)
                 avg_iter_time = (time.time() - iter_start_time) / opt.print_freq
                 visualizer.print_current_errors(epoch_idx, epoch_iter, errors, avg_iter_time)
                 visualizer.plot_current_errors(errors, self.total_iter)
@@ -252,7 +254,7 @@ def test(opt, model, loader, epoch_idx, total_iter, visualizer):
 
     # print result
     test_losses = [test_loss / test_iter for test_loss in test_losses]
-    test_losses = dict(zip(model.module.loss_names, test_losses))
+    test_losses = get_loss_dict(model.module.loss_names, test_losses, opt)
     test_time = time.time() - test_start_time
     visualizer.print_current_errors_test(epoch_idx, total_iter, test_losses, test_time)
     visualizer.plot_current_errors_test(test_losses, total_iter)
