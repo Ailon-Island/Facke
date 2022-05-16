@@ -141,7 +141,7 @@ class SimSwapGAN(ModelBase):
             loss_G_FM = self.FMloss([feat_D_real, feat_D_fake])
             loss_G_FM *= self.opt.lambda_FM
         else:
-            loss_G_FM = loss_G_ID * 0 # whatever, get a zero tensor
+            loss_G_FM = loss_G_GAN * 0 # whatever, get a zero tensor
 
         # G ID
         latent_ID_fake = self.ID_extract(img_fake)
