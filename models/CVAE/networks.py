@@ -143,8 +143,21 @@ class Decoder(nn.Module):
         x = self.encode(x)
         return self.conv(x)
 
-class Merge_Latent(nn.Module): # Sample_X + Y -> ADIN_LATENT -> 512 * 512 ?
-    def __init__(self, in_channels, out_channels, latent_size, num_ID_blocks = 9,
+class Merge_Image(nn.Module):
+    def __init__(self, in_channels, out_channels, img_size=224):
+        super(Merge_Image, self).__init__()
+        self.img_size = img_size
+        self.conv = nn.Conv2d(in_channels, in_channels, kernel_size=1)
+        self.emb = nn.Linear(in_channels, img_size*img_size)
+    def forward(self, Img_Source, Img_Target):
+        X = self.conv(Img_Source)
+        y = self.emb(Img_Target)
+        y = y.view(-1, self.img_size, self.img_size).unsqueeze(1)
+        X = torch.cat([X, y], dim = 1)
+        return X
+
+class Merge_Latent(nn.Module): # Sample_X + Y_ID -> ADIN_LATENT -> 512 * 512 ?
+    def __init__(self, in_channels, out_channels=4, latent_size=512, num_ID_blocks = 9,
             norm=nn.BatchNorm2d,
                  padding_mode='reflect', activation = nn.ReLU(inplace=True)):
         super(Merge_Latent,self).__init__()
@@ -152,7 +165,7 @@ class Merge_Latent(nn.Module): # Sample_X + Y -> ADIN_LATENT -> 512 * 512 ?
         for i in range(num_ID_blocks):
             ID_blocks += [IDBlock(512,latent_size,padding_mode, activation)]
         self.ID_blocks = nn.Sequential(*ID_blocks)
-        self.merge_latent = nn.Linear(in_features= in_channels, out_features= 512 * 4)
+        self.merge_latent = nn.Linear(in_features= in_channels, out_features= latent_size * out_channels)
 
     def forward(self,x,latent_id):
         for ID_block in self.ID_blocks:

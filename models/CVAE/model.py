@@ -29,10 +29,10 @@ class CVAE(ModelBase):
         device = torch.device(self.gpu_ids[0])
         #Merge 1
 
-        self.M1 = networks.Merge_Latent()
+        self.M1 = networks.Merge_Img(in_channel = 3)
 
         #Encoder
-        self.E = networks.Encoder(in_channels= 3)
+        self.E = networks.Encoder(in_channels= 4)
         self.E = self.E.to(device)
 
         #Encoder -> MERGE -> DECODER
@@ -56,13 +56,21 @@ class CVAE(ModelBase):
 
     def forward(self, img_source, img_target, latent_ID, latent_ID_target):
 
-        X = self.M1(latent_ID, latent_ID_target)
+        X = self.M1(img_source, img_target)
 
         mu, log_var = self.E(X)
 
         z = self.reparameterize(mu, log_var)
         y = self.M2(z, latent_ID_target)
         Fake = self.D(y)
-        loss = self.loss_function(Fake, img_source, mu, log_var, weight = 1)
+        if not self.isTrain:
+            return Fake
+
+        loss = self.loss_function(Fake, img_target, mu, log_var, weight = 1)
         return loss
 
+    def save(self, epoch_label):
+        self.save_net(self.M1, 'M1', epoch_label, self.gpu_ids)
+        self.save_net(self.E, 'E', epoch_label, self.gpu_ids)
+        self.save_net(self.M2, 'M2', epoch_label, self.gpu_ids)
+        self.save_net(self.D, 'D', epoch_label, self.gpu_ids)
