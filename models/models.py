@@ -9,7 +9,9 @@ def create_model(opt):
     if opt.model == 'SimSwap':
         from .SimSwap.model import SimSwapGAN
         model = SimSwapGAN()
-
+    elif opt.model == 'CVAE':
+        from .CVAE.model import CVAE
+        model = CVAE()
     model.init(opt)
 
     if opt.isTrain and len(opt.gpu_ids):

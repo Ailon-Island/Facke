@@ -144,7 +144,7 @@ class Decoder(nn.Module):
         return self.conv(x)
 
 class Merge_Image(nn.Module):
-    def __init__(self, in_channels, out_channels, img_size=224):
+    def __init__(self, in_channels, img_size=224):
         super(Merge_Image, self).__init__()
         self.img_size = img_size
         self.conv = nn.Conv2d(in_channels, in_channels, kernel_size=1)

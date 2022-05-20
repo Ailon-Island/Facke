@@ -29,7 +29,7 @@ class CVAE(ModelBase):
         device = torch.device(self.gpu_ids[0])
         #Merge 1
 
-        self.M1 = networks.Merge_Img(in_channel = 3)
+        self.M1 = networks.Merge_Image(in_channels = 3)
 
         #Encoder
         self.E = networks.Encoder(in_channels= 4)
