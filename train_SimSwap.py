@@ -21,6 +21,7 @@ import warnings
 from utils.loss import IDLoss
 
 
+
 detransformer_Arcface = transforms.Compose([
     transforms.Normalize([0, 0, 0], [1 / 0.229, 1 / 0.224, 1 / 0.225]),
     transforms.Normalize([-0.485, -0.456, -0.406], [1, 1, 1])
@@ -266,6 +267,7 @@ def test(opt, model, loader, epoch_idx, total_iter, visualizer):
 if __name__ == '__main__':
     warnings.filterwarnings("ignore")
     torch.backends.cudnn.benchmark = True
+    os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
     opt = TrainOptions().parse()
 

@@ -114,7 +114,10 @@ class VGGFace2HQDataset(DatasetBase):
         with torch.no_grad():
             img = transforms.ToTensor()(img)
             img = img.view(-1, img.shape[0], img.shape[1], img.shape[2])
-            img = img.to('cuda')
+            if torch.cuda.is_available():
+                img = img.to('cuda')
+            else:
+                img = img.to("cpu")
             latent_ID = self.ID_extract(img).cpu().numpy()
             latent_ID = latent_ID.reshape(-1)
             np.save(save_pth, latent_ID)

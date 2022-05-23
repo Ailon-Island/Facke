@@ -26,7 +26,11 @@ class CVAE(ModelBase):
 
         self.iter = 0
 
-        device = torch.device(self.gpu_ids[0])
+        if torch.cuda.is_available():
+            device = torch.device(self.gpu_ids[0])
+        else:
+            device = torch.device("cpu")
+
         #Merge 1
 
         self.M1 = networks.Merge_Image(in_channels = 3)

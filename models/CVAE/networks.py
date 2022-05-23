@@ -74,10 +74,7 @@ class Encoder(nn.Module):
 
          # first convolution
         self.conv1 = nn.Sequential(
-            nn.ReflectionPad2d(padding=3) if padding_mode == 'reflect' else
-            nn.ReplicationPad2d(padding=3) if padding_mode == 'replicate' else
-            nn.ZeroPad2d(padding=3), # padding_mode == 'zero'
-            nn.Conv2d(in_channels, out_channels=64, kernel_size=7),
+            nn.Conv2d(in_channels, out_channels=64, kernel_size=3, stride = 2, padding =1),
             norm(num_features=64),
             activation
         )
@@ -103,7 +100,9 @@ class Encoder(nn.Module):
         self.mu = nn.Linear(512, latent_size)
         self.log = nn.Linear(512, latent_size)
     def forward(self, x):
+        print(x.shape)
         x = self.encoder(x)
+        print(x.shape)
         mu = self.mu(x)
         log_var = self.log(x)
         return [mu, log_var]
@@ -114,19 +113,19 @@ class Decoder(nn.Module):
         upsample = nn.Upsample(scale_factor=2, mode='bilinear')
         self.up1 = nn.Sequential(
             upsample,
-            nn.Conv2d(in_channels= 512, out_channels = 256, kernel_size= 3, stride = 1, padding  = 1,output_padding= 1),
+            nn.Conv2d(in_channels= 512, out_channels = 256, kernel_size= 3, stride = 1, padding  = 1),
             nn.BatchNorm2d(256),
             activation
         )
         self.up2 = nn.Sequential(
             upsample,
-            nn.Conv2d(in_channels= 256, out_channels = 128, kernel_size= 3, stride = 1, padding  = 1,output_padding= 1),
+            nn.Conv2d(in_channels= 256, out_channels = 128, kernel_size= 3, stride = 1, padding  = 1),
             nn.BatchNorm2d(128),
             activation
         )
         self.up3 = nn.Sequential(
             upsample,
-            nn.Conv2d(in_channels= 128, out_channels = 64, kernel_size = 3, stride = 1, padding = 1, output_padding = 1),
+            nn.Conv2d(in_channels= 128, out_channels = 64, kernel_size = 3, stride = 1, padding = 1),
             nn.BatchNorm2d(64),
             activation
         )
@@ -148,11 +147,15 @@ class Merge_Image(nn.Module):
         super(Merge_Image, self).__init__()
         self.img_size = img_size
         self.conv = nn.Conv2d(in_channels, in_channels, kernel_size=1)
-        self.emb = nn.Linear(in_channels, img_size*img_size)
+        self.emb = nn.Conv2d(in_channels, 1, kernel_size=1)
     def forward(self, Img_Source, Img_Target):
+        print(Img_Source.shape, Img_Target.shape)
+
         X = self.conv(Img_Source)
+
         y = self.emb(Img_Target)
-        y = y.view(-1, self.img_size, self.img_size).unsqueeze(1)
+        print(X.shape,y.shape)
+        # y = y.view(-1, self.img_size, self.img_size).unsqueeze(1)
         X = torch.cat([X, y], dim = 1)
         return X
 

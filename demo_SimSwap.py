@@ -47,7 +47,11 @@ if __name__ == '__main__':
     with torch.no_grad():
         it = iter(test_loader)
         (img_source, img_target), (latent_ID, latent_ID_target), _ = next(it)
-        img_source, img_target, latent_ID, latent_ID_target = img_source.to('cuda'), img_target.to('cuda'), latent_ID.to('cuda'), latent_ID_target.to('cuda')
+        if torch.cuda.is_available():
+            img_source, img_target, latent_ID, latent_ID_target = img_source.to('cuda'), img_target.to('cuda'), latent_ID.to('cuda'), latent_ID_target.to('cuda')
+        else:
+            img_source, img_target, latent_ID, latent_ID_target = img_source.to('cpu'), img_target.to('cpu'), latent_ID.to('cpu'), latent_ID_target.to('cpu')
+
         img_fake = model(img_source, img_target, latent_ID, latent_ID_target)
 
         # img_source = detransformer_Arcface(img_source)
