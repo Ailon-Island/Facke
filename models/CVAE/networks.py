@@ -138,11 +138,12 @@ class Decoder(nn.Module):
             nn.BatchNorm2d(64),
             activation
         )
+        # self.UpScale = nn.Upsample(scale_factor=14, mode='bilinear')
         self.decode = nn.Sequential(self.up1, self.up2, self.up3)
 
         self.conv2 = nn.Sequential(
-            nn.ReflectionPad2d(padding=3),
-            nn.Upsample(scale_factor=2, mode='bilinear'),
+            nn.ReflectionPad2d(padding=6),
+            nn.Upsample(scale_factor=16, mode='bilinear'),
             nn.Conv2d(64, out_channels, kernel_size=7),
             nn.BatchNorm2d(num_features=out_channels),
             nn.Tanh()
@@ -158,7 +159,9 @@ class Decoder(nn.Module):
         print("AFTER up2",x.shape)
         x = self.up3(x)
         # x = self.decode(x)
-        print("AFTER Decode", x.shape)
+        print("AFTER up3", x.shape)
+        # x = self.UpScale(x)
+        # print("AFTER upScale", x.shape)
         x = self.conv2(x)
         print("AFTER outputLayer", x.shape)
         print("===== FINISH Decode======")
