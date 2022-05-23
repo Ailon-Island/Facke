@@ -100,9 +100,10 @@ class Encoder(nn.Module):
         self.mu = nn.Linear(512, latent_size)
         self.log = nn.Linear(512, latent_size)
     def forward(self, x):
-        print(x.shape)
+        print("ENCODER FORWARD")
+        print("BEFORE DOWNSAMPLE", x.shape)
         x = self.encoder(x)
-        print(x.shape)
+        print("AFTER DOWNSAMPLE", x.shape)
         mu = self.mu(x)
         log_var = self.log(x)
         return [mu, log_var]
