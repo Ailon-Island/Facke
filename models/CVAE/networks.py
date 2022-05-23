@@ -1,3 +1,4 @@
+from tracemalloc import start
 from turtle import forward
 import torch
 from torch import nn
@@ -97,20 +98,14 @@ class Encoder(nn.Module):
         )
 
         self.encoder = nn.Sequential(self.conv1, self.down1,self.down2,self.down3)
-        self.mu = nn.Linear(512, latent_size)
-        self.log = nn.Linear(512, latent_size)
+        self.mu = nn.Linear(512*14*14, latent_size)
+        self.log = nn.Linear(512*14*14, latent_size)
     def forward(self, x):
         print("=========ENCODER FORWARD=========")
         print("BEFORE DOWNSAMPLE", x.shape)
-        x = self.conv1(x)
-        print("AFTER conv1",x.shape)
-        x = self.down1(x)
-        print("AFTER down1",x.shape)
-        x = self.down2(x)
-        print("AFTER down2",x.shape)
-        x = self.down3(x)
-        # x = self.encoder(x)
-        print("AFTER DOWNSAMPLE", x.shape)
+        x = self.encoder(x)
+        x = torch.flatten(x,start_dim = 1)
+        print("AFTER DOWNSAMPLE AND Flatten", x.shape)
         mu = self.mu(x)
         log_var = self.log(x)
         return [mu, log_var]
