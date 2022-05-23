@@ -34,14 +34,14 @@ class CVAE(ModelBase):
         #Merge 1
 
         self.M1 = networks.Merge_Image(in_channels = 3)
-
+        self.M1 = self.M1.to(device)
         #Encoder
         self.E = networks.Encoder(in_channels= 4)
         self.E = self.E.to(device)
 
         #Encoder -> MERGE -> DECODER
         self.M2 = networks.Merge_Latent(in_channels=512, out_channels=512, latent_size=512)
-        
+        self.M2 = self.M2.to(device)
     
         #Decoder
         self.D = networks.Decoder()
