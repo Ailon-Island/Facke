@@ -174,7 +174,9 @@ class Merge_Latent(nn.Module): # Sample_X + Y_ID -> ADIN_LATENT -> 512 * 512 ?
         self.merge_latent = nn.Linear(in_features= in_channels, out_features= latent_size * out_channels)
 
     def forward(self,x,latent_id):
+        print("=====In Merge_Latent.forward=====")
         for ID_block in self.ID_blocks:
-            x = ID_block(x, latent_id)            
+            x = ID_block(x, latent_id)    
+            print(f"After {ID_block} BLOCK", x.shape)        
         return self.merge_latent(x)
 
