@@ -59,10 +59,15 @@ class IDBlock(nn.Module):
 
 
     def forward(self, x, latent_id):
+        print("====IN IDBLOCK =====")
+        print("ORIGIN X", x.shape)
         y = self.conv1(x)
+        print("AFTER conv1", y.shape)
         y = self.adain1(y, latent_id)
+        print("AFTER ADIN1", y.shape)
         y = self.act(y)
         y = self.conv2(y)
+        print("AFTER conv2",y.shape)
         y = self.adain2(y, latent_id)
         y = x + y
         return y
