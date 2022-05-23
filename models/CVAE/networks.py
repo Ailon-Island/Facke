@@ -116,9 +116,10 @@ class Encoder(nn.Module):
         return [mu, log_var]
 
 class Decoder(nn.Module):
-    def __init__(self, out_channels = 3, activation=nn.LeakyReLU(0.2, True)):
+    def __init__(self, in_channels=512, out_channels = 3, activation=nn.LeakyReLU(0.2, True)):
         super(Decoder,self).__init__()
         upsample = nn.Upsample(scale_factor=2, mode='bilinear')
+
         self.up1 = nn.Sequential(
             upsample,
             nn.Conv2d(in_channels= 512, out_channels = 256, kernel_size= 3, stride = 1, padding  = 1),
@@ -137,9 +138,9 @@ class Decoder(nn.Module):
             nn.BatchNorm2d(64),
             activation
         )
-        self.encode = nn.Sequential(self.up1, self.up2, self.up3)
+        self.decode = nn.Sequential(self.up1, self.up2, self.up3)
 
-        self.conv = nn.Sequential(
+        self.conv2 = nn.Sequential(
             nn.ReflectionPad2d(padding=3),
             nn.Upsample(scale_factor=2, mode='bilinear'),
             nn.Conv2d(64, out_channels, kernel_size=7),
@@ -147,8 +148,19 @@ class Decoder(nn.Module):
             nn.Tanh()
         )
     def forward(self, x):
-        x = self.encode(x)
-        return self.conv(x)
+        print("=========IN Decoder========")
+        print("ORIGIN ",x.shape)
+        x = self.up1(x)
+        print("AFTER up1", x.shape)
+        x = self.up2(x)
+        print("AFTER up2",x.shape)
+        x = self.up3(x)
+        # x = self.decode(x)
+        print("AFTER Decode", x.shape)
+        x = self.conv2(x)
+        print("AFTER outputLayer", x.shape)
+        print("===== FINISH Decode======")
+        return (x+1)/2
 
 class Merge_Image(nn.Module):
     def __init__(self, in_channels, img_size=224):
