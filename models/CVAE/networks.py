@@ -153,7 +153,7 @@ class Decoder(nn.Module):
         x = torch.unsqueeze(torch.unsqueeze(x,2),3)
         print("AFTER UNSQUEEZE", x.shape)
         x = self.up1(x)
-        print("AFTER up1", x.shgape)
+        print("AFTER up1", x.shape)
         x = self.up2(x)
         print("AFTER up2",x.shape)
         x = self.up3(x)
