@@ -150,8 +150,10 @@ class Decoder(nn.Module):
     def forward(self, x):
         print("=========IN Decoder========")
         print("ORIGIN ",x.shape)
+        x = torch.unsqueeze(torch.unsqueeze(x,2),3)
+        print("AFTER UNSQUEEZE", x.shape)
         x = self.up1(x)
-        print("AFTER up1", x.shape)
+        print("AFTER up1", x.shgape)
         x = self.up2(x)
         print("AFTER up2",x.shape)
         x = self.up3(x)
