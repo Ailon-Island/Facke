@@ -66,7 +66,7 @@ class CVAE(ModelBase):
         print("=========In CVAE.forward=======")
         print("MU",mu.shape)
         z = self.reparameterize(mu, log_var)
-        print("z", z)
+        print("z", z.shape)
         print("LAtent_ID_target", latent_ID_target.shape)
         y = self.M2(z, latent_ID_target)
         Fake = self.D(y)
