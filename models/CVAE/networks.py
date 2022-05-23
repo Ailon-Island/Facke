@@ -167,21 +167,14 @@ class Merge_Image(nn.Module):
         X = torch.cat([X, y], dim = 1)
         return X
 
-class Merge_Latent(nn.Module): # Sample_X + Y_ID -> ADIN_LATENT -> 512 * 512 ?
-    def __init__(self, in_channels, out_channels=4, latent_size=512, num_ID_blocks = 9,
-            norm=nn.BatchNorm2d,
-                 padding_mode='reflect', activation = nn.ReLU(inplace=True)):
-        super(Merge_Latent,self).__init__()
-        ID_blocks = []
-        for i in range(num_ID_blocks):
-            ID_blocks += [IDBlock(512,latent_size,padding_mode, activation)]
-        self.ID_blocks = nn.Sequential(*ID_blocks)
-        self.merge_latent = nn.Linear(in_features= in_channels, out_features= latent_size * out_channels)
+class Merge_Distribution(nn.Module): # Sample_X + Y_ID -> ADIN_LATENT -> 512 ?
+    def __init__(self, in_channels):
+        super(Merge_Distribution,self).__init__()
+        self.mu = nn.Linear(in_channels,in_channels)
+        self.log_var = nn.Linear(in_channels,in_channels)
 
-    def forward(self,x,latent_id):
-        print("=====In Merge_Latent.forward=====")
-        for ID_block in self.ID_blocks:
-            x = ID_block(x, latent_id)    
-            print(f"After {ID_block} BLOCK", x.shape)        
-        return self.merge_latent(x)
+    def forward(self, mu,log_var, latent_id):
+        ID_mu = self.mu(latent_id)
+        ID_log_var = self.log_var(latent_id)
+        return mu - ID_mu, log_var-ID_log_var
 

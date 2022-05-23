@@ -40,7 +40,7 @@ class CVAE(ModelBase):
         self.E = self.E.to(device)
 
         #Encoder -> MERGE -> DECODER
-        self.M2 = networks.Merge_Latent(in_channels=512, out_channels=512, latent_size=512)
+        self.M2 = networks.Merge_Distribution(in_channels=512)
         self.M2 = self.M2.to(device)
     
         #Decoder
@@ -65,11 +65,15 @@ class CVAE(ModelBase):
         mu, log_var = self.E(X)
         print("=========In CVAE.forward=======")
         print("MU",mu.shape)
+
+        mu, log_var = self.M2(mu,log_var, latent_ID_target)
+
+
         z = self.reparameterize(mu, log_var)
         print("z", z.shape)
         print("LAtent_ID_target", latent_ID_target.shape)
-        y = self.M2(z, latent_ID_target)
-        Fake = self.D(y)
+        # y = self.M2(z, latent_ID_target)
+        Fake = self.D(z)
         if not self.isTrain:
             return Fake
 
