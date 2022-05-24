@@ -72,15 +72,15 @@ class CVAE(ModelBase):
         X = self.M1(img_source, img_target)
 
         mu, log_var = self.E(X)
-        print("=========In CVAE.forward=======")
-        print("MU",mu.shape)
+        # print("=========In CVAE.forward=======")
+        # print("MU",mu.shape)
 
         mu, log_var = self.M2(mu,log_var, latent_ID_target)
 
 
         z = self.reparameterize(mu, log_var)
-        print("z", z.shape)
-        print("LAtent_ID_target", latent_ID_target.shape)
+        # print("z", z.shape)
+        # print("LAtent_ID_target", latent_ID_target.shape)
         # y = self.M2(z, latent_ID_target)
         Fake = self.D(z)
         if not self.isTrain:

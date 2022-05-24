@@ -59,15 +59,15 @@ class IDBlock(nn.Module):
 
 
     def forward(self, x, latent_id):
-        print("====IN IDBLOCK =====")
-        print("ORIGIN X", x.shape)
+        # print("====IN IDBLOCK =====")
+        # print("ORIGIN X", x.shape)
         y = self.conv1(x)
-        print("AFTER conv1", y.shape)
+        # print("AFTER conv1", y.shape)
         y = self.adain1(y, latent_id)
-        print("AFTER ADIN1", y.shape)
+        # print("AFTER ADIN1", y.shape)
         y = self.act(y)
         y = self.conv2(y)
-        print("AFTER conv2",y.shape)
+        # print("AFTER conv2",y.shape)
         y = self.adain2(y, latent_id)
         y = x + y
         return y
@@ -106,11 +106,11 @@ class Encoder(nn.Module):
         self.mu = nn.Linear(512*14*14, latent_size)
         self.log = nn.Linear(512*14*14, latent_size)
     def forward(self, x):
-        print("=========ENCODER FORWARD=========")
-        print("BEFORE DOWNSAMPLE", x.shape)
+        # print("=========ENCODER FORWARD=========")
+        # print("BEFORE DOWNSAMPLE", x.shape)
         x = self.encoder(x)
         x = torch.flatten(x,start_dim = 1)
-        print("AFTER DOWNSAMPLE AND Flatten", x.shape)
+        # print("AFTER DOWNSAMPLE AND Flatten", x.shape)
         mu = self.mu(x)
         log_var = self.log(x)
         return [mu, log_var]
@@ -149,22 +149,22 @@ class Decoder(nn.Module):
             nn.Tanh()
         )
     def forward(self, x):
-        print("=========IN Decoder========")
-        print("ORIGIN ",x.shape)
+        # print("=========IN Decoder========")
+        # print("ORIGIN ",x.shape)
         x = torch.unsqueeze(torch.unsqueeze(x,2),3)
-        print("AFTER UNSQUEEZE", x.shape)
+        # print("AFTER UNSQUEEZE", x.shape)
         x = self.up1(x)
-        print("AFTER up1", x.shape)
+        # print("AFTER up1", x.shape)
         x = self.up2(x)
-        print("AFTER up2",x.shape)
+        # print("AFTER up2",x.shape)
         x = self.up3(x)
         # x = self.decode(x)
-        print("AFTER up3", x.shape)
+        # print("AFTER up3", x.shape)
         # x = self.UpScale(x)
         # print("AFTER upScale", x.shape)
         x = self.conv2(x)
-        print("AFTER outputLayer", x.shape)
-        print("===== FINISH Decode======")
+        # print("AFTER outputLayer", x.shape)
+        # print("===== FINISH Decode======")
         return (x+1)/2
 
 class Merge_Image(nn.Module):
