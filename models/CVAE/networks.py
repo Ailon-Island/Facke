@@ -107,8 +107,8 @@ class Encoder(nn.Module):
         )
 
         self.encoder = nn.Sequential(self.conv0, self.conv1, self.down1,self.down2,self.down3)
-        self.mu = nn.Linear(512*14*14, latent_size)
-        self.log = nn.Linear(512*14*14, latent_size)
+        self.mu = nn.Linear(512*7*7, latent_size)
+        self.log = nn.Linear(512*7*7, latent_size)
     def forward(self, x):
         # print("=========ENCODER FORWARD=========")
         print("BEFORE DOWNSAMPLE", x.shape)
