@@ -79,12 +79,16 @@ class Encoder(nn.Module):
         super(Encoder, self).__init__()
 
          # first convolution
+        self.conv0 = nn.Sequential(
+            nn.Conv2d(in_channels, out_channels=32, kernel_size=3, stride = 2, padding =1),
+            norm(num_features=32),
+            activation
+        )
         self.conv1 = nn.Sequential(
-            nn.Conv2d(in_channels, out_channels=64, kernel_size=3, stride = 2, padding =1),
+            nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3, stride = 2, padding =1),
             norm(num_features=64),
             activation
         )
-
         # downsampling
         self.down1 = nn.Sequential(
             nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3, stride=2, padding=1),
@@ -102,15 +106,15 @@ class Encoder(nn.Module):
             activation
         )
 
-        self.encoder = nn.Sequential(self.conv1, self.down1,self.down2,self.down3)
+        self.encoder = nn.Sequential(self.conv0, self.conv1, self.down1,self.down2,self.down3)
         self.mu = nn.Linear(512*14*14, latent_size)
         self.log = nn.Linear(512*14*14, latent_size)
     def forward(self, x):
         # print("=========ENCODER FORWARD=========")
-        # print("BEFORE DOWNSAMPLE", x.shape)
+        print("BEFORE DOWNSAMPLE", x.shape)
         x = self.encoder(x)
         x = torch.flatten(x,start_dim = 1)
-        # print("AFTER DOWNSAMPLE AND Flatten", x.shape)
+        print("AFTER DOWNSAMPLE AND Flatten", x.shape)
         mu = self.mu(x)
         log_var = self.log(x)
         return [mu, log_var]
@@ -119,7 +123,7 @@ class Decoder(nn.Module):
     def __init__(self, in_channels=512, out_channels = 3, activation=nn.LeakyReLU(0.2, True)):
         super(Decoder,self).__init__()
         upsample = nn.Upsample(scale_factor=2, mode='bilinear')
-
+        self.inputLayer = nn.Linear(in_channels, out_channels = 512 * 14*14)
         self.up1 = nn.Sequential(
             upsample,
             nn.Conv2d(in_channels= 512, out_channels = 256, kernel_size= 3, stride = 1, padding  = 1),
@@ -156,17 +160,18 @@ class Decoder(nn.Module):
         )
     def forward(self, x):
         # print("=========IN Decoder========")
-        # print("ORIGIN ",x.shape)
-        x = torch.unsqueeze(torch.unsqueeze(x,2),3)
-        # print("AFTER UNSQUEEZE", x.shape)
+        print("ORIGIN ",x.shape)
+        x = self.inputLayer(x)
+        print("AFTER inputLayer", x.shape)
         x = self.up1(x)
-        # print("AFTER up1", x.shape)
+        print("AFTER up1", x.shape)
         x = self.up2(x)
-        # print("AFTER up2",x.shape)
+        print("AFTER up2",x.shape)
         x = self.up3(x)
+        print("AFTER up3",x.shape)
         x = self.up4(x)
         # x = self.decode(x)
-        print("AFTER up3", x.shape)
+        print("AFTER up4", x.shape)
         # x = self.UpScale(x)
         # print("AFTER upScale", x.shape)
         x = self.conv2(x)
