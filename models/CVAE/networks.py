@@ -153,7 +153,7 @@ class Decoder(nn.Module):
 
         self.conv2 = nn.Sequential(
             nn.ReflectionPad2d(padding=3),
-            nn.Upsample(scale_factor=8, mode='bilinear'),
+            nn.Upsample(scale_factor=2, mode='bilinear'),
             nn.Conv2d(32, out_channels, kernel_size=7, padding= 3),
             nn.BatchNorm2d(num_features=out_channels),
             nn.Tanh()
