@@ -47,9 +47,14 @@ class CVAE(ModelBase):
         self.D = networks.Decoder()
         self.D = self.D.to(device)
 
+        # loss functions
         self.loss_names = ['Rec', 'KL']
         self.Recloss = nn.MSELoss()
         self.KLloss = loss.KLLoss(Weight= 0.5)
+
+        # optimizers
+        params = list(self.M1.parameters() + self.E.parameters() + self.M2.parameters() + self.D.parameters())
+        self.optim = torch.optim.Adam(params, lr = opt.lr, betas=(opt.beta1, 0.999))
 
     # def loss_function(self, recons, input, mu, log_var, weight):
     #     recons_loss = F.mse_loss(recons, input)
