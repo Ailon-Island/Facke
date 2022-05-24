@@ -78,7 +78,7 @@ class CVAE(ModelBase):
             return Fake
 
         loss = self.loss_function(Fake, img_target, mu, log_var, weight = 1)
-        return loss
+        return loss, Fake
 
     def save(self, epoch_label):
         self.save_net(self.M1, 'M1', epoch_label, self.gpu_ids)
