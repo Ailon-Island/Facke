@@ -174,12 +174,12 @@ class Merge_Image(nn.Module):
         self.conv = nn.Conv2d(in_channels, in_channels, kernel_size=1)
         self.emb = nn.Conv2d(in_channels, 1, kernel_size=1)
     def forward(self, Img_Source, Img_Target):
-        print(Img_Source.shape, Img_Target.shape)
+        # print(Img_Source.shape, Img_Target.shape)
 
         X = self.conv(Img_Source)
 
         y = self.emb(Img_Target)
-        print(X.shape,y.shape)
+        # print(X.shape,y.shape)
         # y = y.view(-1, self.img_size, self.img_size).unsqueeze(1)
         X = torch.cat([X, y], dim = 1)
         return X
