@@ -53,7 +53,7 @@ class CVAE(ModelBase):
         self.KLloss = loss.KLLoss(Weight= 0.5)
 
         # optimizers
-        params = list(self.M1.parameters() + self.E.parameters() + self.M2.parameters() + self.D.parameters())
+        params = list(self.M1.parameters()) + list(self.E.parameters()) + list(self.M2.parameters()) + list(self.D.parameters())
         self.optim = torch.optim.Adam(params, lr = opt.lr, betas=(opt.beta1, 0.999))
 
     # def loss_function(self, recons, input, mu, log_var, weight):
