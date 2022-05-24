@@ -1,3 +1,4 @@
+from turtle import forward
 import torch
 from torch import nn
 import torch.nn.functional as F
@@ -159,4 +160,28 @@ class FMLoss(nn.Module):
 
         return loss
 
+class KLLoss(nn.Module): #KL-divergence to N(0,1)
+    def __init__(self, Weight):
+        super(KLLoss,self).__init__()
+        self.Weight = Weight
+    def forward(self, mu, log_var):
+        kld_loss = torch.mean(-0.5 * torch.sum(1+ log_var - mu**2 - log_var.exp(),dim=1),dim = 0)
+        return self.Weight * kld_loss
+
+
+
+# class CVAELoss(nn.Module):
+#     def __init__(self, KL_Weight=0.5, Tensor=torch.FloatTensor, opt=None):
+#         super(CVAELoss, self).__init__()
+        
+#         self.KL_Weight = KL_Weight
+#         self.Tensor = Tensor
+#         self.opt = opt
+
+
+#     def forward(self, recons, input, mu, log_var):
+#         recons_loss = F.mse_loss(recons, input)
+#         kld_loss = torch.mean(-0.5 * torch.sum(1+ log_var - mu**2 - log_var.exp(),dim=1),dim = 0)
+#         loss = recons_loss + self.KL_Weight * kld_loss
+#         return loss
 

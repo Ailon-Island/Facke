@@ -47,11 +47,15 @@ class CVAE(ModelBase):
         self.D = networks.Decoder()
         self.D = self.D.to(device)
 
-    def loss_function(self, recons, input, mu, log_var, weight):
-        recons_loss = F.mse_loss(recons, input)
-        kld_loss = torch.mean(-0.5 * torch.sum(1+ log_var - mu**2 - log_var.exp(),dim=1),dim = 0)
-        loss = recons_loss + weight * kld_loss
-        return loss
+        self.loss_names = ['Rec', 'KL']
+        self.Recloss = nn.MSELoss()
+        self.KLloss = loss.KLLoss(Weight= 0.5)
+
+    # def loss_function(self, recons, input, mu, log_var, weight):
+    #     recons_loss = F.mse_loss(recons, input)
+    #     kld_loss = torch.mean(-0.5 * torch.sum(1+ log_var - mu**2 - log_var.exp(),dim=1),dim = 0)
+    #     loss = recons_loss + weight * kld_loss
+    #     return loss
 
     def reparameterize(self, mu, log_var):
         std = torch.exp(0.5 * log_var)
@@ -77,8 +81,10 @@ class CVAE(ModelBase):
         if not self.isTrain:
             return Fake
 
-        loss = self.loss_function(Fake, img_target, mu, log_var, weight = 1)
-        return loss, Fake
+        loss_Rec = self.Recloss(Fake, img_source)
+        loss_KL = self.KLloss(mu, log_var)
+
+        return [[loss_Rec, loss_KL], Fake]
 
     def save(self, epoch_label):
         self.save_net(self.M1, 'M1', epoch_label, self.gpu_ids)
