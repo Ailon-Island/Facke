@@ -240,7 +240,7 @@ def test(opt, model, loader, epoch_idx, total_iter, visualizer):
                     imgs.append(save_img[i, ...])
 
                     image_infer = img_source[i, ...].repeat(sample_size, 1, 1, 1)
-                    img_fake = model.module.G(image_infer, latent_ID).cpu().numpy()
+                    img_fake = model.module.G(img_source, image_infer, latent_ID, latent_ID[i,...]).cpu().numpy()
 
                     for j in range(sample_size):
                         imgs.append(img_fake[j, ...])
