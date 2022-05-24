@@ -142,7 +142,7 @@ class Trainer:
                         imgs.append(save_img[i, ...])
 
                         image_infer = img_source[i, ...].repeat(self.sample_size, 1, 1, 1)
-                        img_fake = self.model.module(image_infer, latent_ID).cpu().numpy()
+                        img_fake = self.model.module(img_source, image_infer, latent_ID, latent_ID[i,...]).cpu().numpy()
 
                         for j in range(self.sample_size):
                             imgs.append(img_fake[j, ...])
@@ -212,7 +212,7 @@ def test(opt, model, loader, epoch_idx, total_iter, visualizer):
             test_losses = losses
         else:
             test_losses = [
-                test_loss + loss * batch_size if is_same_ID or loss_name != 'G_rec' else
+                test_loss + loss * batch_size if is_same_ID or loss_name != 'rec' else
                 test_loss
                 for loss_name, test_loss, loss in zip(model.module.loss_names, test_losses, losses)]
 
@@ -240,7 +240,7 @@ def test(opt, model, loader, epoch_idx, total_iter, visualizer):
                     imgs.append(save_img[i, ...])
 
                     image_infer = img_source[i, ...].repeat(sample_size, 1, 1, 1)
-                    img_fake = model.module.G(img_source, image_infer, latent_ID, latent_ID[i,...]).cpu().numpy()
+                    img_fake = model.module(img_source, image_infer, latent_ID, latent_ID[i,...]).cpu().numpy()
 
                     for j in range(sample_size):
                         imgs.append(img_fake[j, ...])
@@ -301,12 +301,14 @@ if __name__ == '__main__':
         if opt.continue_train:  # copy official checkpoint
             shutil.copyfile(os.path.join(opt.checkpoints_dir, opt.load_pretrain, 'iter.txt'),
                             os.path.join(opt.checkpoints_dir, opt.name, 'iter.txt'))
-            shutil.copyfile(os.path.join(opt.checkpoints_dir, opt.load_pretrain, 'G', 'latest.pth'),
-                            os.path.join(opt.checkpoints_dir, opt.name, 'G', 'latest.pth'))
-            shutil.copyfile(os.path.join(opt.checkpoints_dir, opt.load_pretrain, 'D1', 'latest.pth'),
-                            os.path.join(opt.checkpoints_dir, opt.name, 'D1', 'latest.pth'))
-            shutil.copyfile(os.path.join(opt.checkpoints_dir, opt.load_pretrain, 'D2', 'latest.pth'),
-                            os.path.join(opt.checkpoints_dir, opt.name, 'D2', 'latest.pth'))
+            shutil.copyfile(os.path.join(opt.checkpoints_dir, opt.load_pretrain, 'M1', 'latest.pth'),
+                            os.path.join(opt.checkpoints_dir, opt.name, 'M1', 'latest.pth'))
+            shutil.copyfile(os.path.join(opt.checkpoints_dir, opt.load_pretrain, 'E', 'latest.pth'),
+                            os.path.join(opt.checkpoints_dir, opt.name, 'E', 'latest.pth'))
+            shutil.copyfile(os.path.join(opt.checkpoints_dir, opt.load_pretrain, 'M2', 'latest.pth'),
+                            os.path.join(opt.checkpoints_dir, opt.name, 'M2', 'latest.pth'))
+            shutil.copyfile(os.path.join(opt.checkpoints_dir, opt.load_pretrain, 'D', 'latest.pth'),
+                            os.path.join(opt.checkpoints_dir, opt.name, 'D', 'latest.pth'))                            
     if not os.path.exists(os.path.join(save_path, 'opt.txt')):
         file_name = os.path.join(save_path, 'opt.txt')
         with open(file_name, 'wt') as opt_file:
