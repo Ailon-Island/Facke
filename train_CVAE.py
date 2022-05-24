@@ -126,6 +126,7 @@ class Trainer:
                 self.model.module.E.eval()
                 self.model.module.M2.eval()
                 self.model.module.D.eval()
+                self.model.module.eval()
                 with torch.no_grad():
                     img_source = img_source[:self.sample_size]
                     latent_ID = latent_ID[:self.sample_size]
