@@ -152,9 +152,8 @@ class Decoder(nn.Module):
         self.decode = nn.Sequential(self.up1, self.up2, self.up3, self.up4)
 
         self.conv2 = nn.Sequential(
-            nn.ReflectionPad2d(padding=3),
             nn.Upsample(scale_factor=2, mode='bilinear'),
-            nn.Conv2d(32, out_channels, kernel_size=7, padding= 3),
+            nn.Conv2d(32, out_channels, kernel_size=3, padding= 1),
             nn.BatchNorm2d(num_features=out_channels),
             nn.Tanh()
         )
