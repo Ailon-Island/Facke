@@ -123,9 +123,9 @@ class Trainer:
                     os.mkdir(self.sample_path)
 
                 self.model.module.M1.eval()
-                self.model.E.eval()
-                self.model.M2.eval()
-                self.model.D.eval()
+                self.model.module.E.eval()
+                self.model.module.M2.eval()
+                self.model.module.D.eval()
                 with torch.no_grad():
                     img_source = img_source[:self.sample_size]
                     latent_ID = latent_ID[:self.sample_size]
