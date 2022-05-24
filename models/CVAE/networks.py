@@ -123,7 +123,7 @@ class Decoder(nn.Module):
     def __init__(self, in_channels=512, out_channels = 3, activation=nn.LeakyReLU(0.2, True)):
         super(Decoder,self).__init__()
         upsample = nn.Upsample(scale_factor=2, mode='bilinear')
-        self.inputLayer = nn.Linear(in_channels, out_channels = 512 * 14*14)
+        self.inputLayer = nn.Linear(in_channels, 512 * 14*14)
         self.up1 = nn.Sequential(
             upsample,
             nn.Conv2d(in_channels= 512, out_channels = 256, kernel_size= 3, stride = 1, padding  = 1),
