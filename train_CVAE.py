@@ -152,7 +152,7 @@ class Trainer:
                     print("Save test data for iter {}.".format(self.total_iter))
                     imgs = np.stack(imgs, axis=0).transpose(0, 2, 3, 1)
                     plot_batch(imgs, os.path.join(self.sample_path, 'step_' + str(self.total_iter) + '.jpg'))
-                self.isTrain = True
+                self.model.module.isTrain = True
 
 
                 # visuals = OrderedDict([('source_img', utils.tensor2im(img_target[0])),
