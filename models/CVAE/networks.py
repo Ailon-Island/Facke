@@ -163,6 +163,7 @@ class Decoder(nn.Module):
         print("ORIGIN ",x.shape)
         x = self.inputLayer(x)
         print("AFTER inputLayer", x.shape)
+        x = x.view(-1,512,7,7)
         x = self.up1(x)
         print("AFTER up1", x.shape)
         x = self.up2(x)
