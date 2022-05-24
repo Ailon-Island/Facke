@@ -164,12 +164,13 @@ class Decoder(nn.Module):
         x = self.up2(x)
         # print("AFTER up2",x.shape)
         x = self.up3(x)
+        x = self.up4(x)
         # x = self.decode(x)
-        # print("AFTER up3", x.shape)
+        print("AFTER up3", x.shape)
         # x = self.UpScale(x)
         # print("AFTER upScale", x.shape)
         x = self.conv2(x)
-        # print("AFTER outputLayer", x.shape)
+        print("AFTER outputLayer", x.shape)
         # print("===== FINISH Decode======")
         return (x+1)/2
 
