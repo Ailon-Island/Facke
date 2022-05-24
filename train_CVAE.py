@@ -122,7 +122,10 @@ class Trainer:
                 if not os.path.exists(self.sample_path):
                     os.mkdir(self.sample_path)
 
-                self.model.module.G.eval()
+                self.model.module.M1.eval()
+                self.model.E.eval()
+                self.model.M2.eval()
+                self.model.D.eval()
                 with torch.no_grad():
                     img_source = img_source[:self.sample_size]
                     latent_ID = latent_ID[:self.sample_size]
@@ -139,7 +142,7 @@ class Trainer:
                         imgs.append(save_img[i, ...])
 
                         image_infer = img_source[i, ...].repeat(self.sample_size, 1, 1, 1)
-                        img_fake = self.model.module.G(image_infer, latent_ID).cpu().numpy()
+                        img_fake = self.model.module(image_infer, latent_ID).cpu().numpy()
 
                         for j in range(self.sample_size):
                             imgs.append(img_fake[j, ...])
