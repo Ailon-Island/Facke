@@ -139,11 +139,17 @@ class Decoder(nn.Module):
             activation
         )
         # self.UpScale = nn.Upsample(scale_factor=14, mode='bilinear')
-        self.decode = nn.Sequential(self.up1, self.up2, self.up3)
+        self.up4 = nn.Sequential(
+            upsample,
+            nn.Conv2d(in_channels = 64, out_channels = 32, kernel_size = 3, stride = 1, padding = 1),
+            nn.BatchNorm2d(32),
+            activation
+        )
+        self.decode = nn.Sequential(self.up1, self.up2, self.up3, self.up4)
 
         self.conv2 = nn.Sequential(
             nn.ReflectionPad2d(padding=3),
-            nn.Upsample(scale_factor=16, mode='bilinear'),
+            nn.Upsample(scale_factor=8, mode='bilinear'),
             nn.Conv2d(64, out_channels, kernel_size=7, padding= 3),
             nn.BatchNorm2d(num_features=out_channels),
             nn.Tanh()
