@@ -113,16 +113,17 @@ class ILVR(ModelBase):
     def forward(self, img, cond = None):
         #self.optim.zero_grad()
         # for i in range(0, img.shape[0], self.microimg):
+        device = img.device
 
         if cond is None:
             cond = {}
         else:
             cond = {
-                k: v.to(self.device)
+                k: v.to(device)
                 for k, v in cond.items()
             }
 
-        t, weights = self.schedule_sampler.sample(img.shape[0], self.device)
+        t, weights = self.schedule_sampler.sample(img.shape[0], device)
 
         # compute_losses = functools.partial(
         #     self.diffusion.training_losses,
