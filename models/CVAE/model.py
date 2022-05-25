@@ -52,7 +52,7 @@ class CVAE(ModelBase):
         # loss functions
         self.loss_names = ['Rec', 'KL']
         self.Recloss = nn.MSELoss()
-        self.KLloss = loss.KLLoss(Weight= 0.00025)
+        self.KLloss = loss.KLLoss(Weight= 0.000025)
 
         # optimizers
         params = list(self.M1.parameters()) + list(self.E.parameters()) + list(self.M2.parameters()) + list(self.D.parameters())
@@ -81,10 +81,10 @@ class CVAE(ModelBase):
         # print("=========In CVAE.forward=======")
         # print("MU",mu.shape)
 
-        mu, log_var = self.M2(mu,log_var, latent_ID_target)
+        Inject_mu, Inject_log_var = self.M2(mu,log_var, latent_ID_target)
 
 
-        z = self.reparameterize(mu, log_var)
+        z = self.reparameterize(Inject_mu, Inject_log_var)
         # print("z", z.shape)
         # print("LAtent_ID_target", latent_ID_target.shape)
         # y = self.M2(z, latent_ID_target)
