@@ -640,9 +640,6 @@ class UNetModel(nn.Module):
         :param y: an [N] Tensor of labels, if class-conditional.
         :return: an [N x C x ...] Tensor of outputs.
         """
-        print("batch device: ", (x.device))
-        print("batch type: ", (type(x)))
-        print("batch shape: ", x.shape)
 
         assert (y is not None) == (
             self.num_classes is not None
