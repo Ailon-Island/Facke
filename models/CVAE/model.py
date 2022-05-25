@@ -14,7 +14,6 @@ from utils import loss
 from utils.IDExtract import IDExtractor
 from . import networks
 from ..model_base import ModelBase
-from torchvision import transforms
 
 
 class CVAE(ModelBase):
@@ -30,7 +29,6 @@ class CVAE(ModelBase):
         self.gpu_ids = opt.gpu_ids
         self.img_size = opt.image_size
         self.iter = 0
-        self.INnorm = transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)) # normalization of ImageNet
 
         if torch.cuda.is_available():
             device = torch.device(self.gpu_ids[0])
