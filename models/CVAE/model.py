@@ -2,6 +2,16 @@ import  os
 import sys
 import time
 
+
+
+transformer_Arcface = transforms.Compose([
+    transforms.ToTensor(),
+    transforms.Resize((opt.image_size, opt.image_size)),
+    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+])
+
+
+
 root_path = os.path.join("..", "..")
 sys.path.append(root_path)
 import torch
@@ -89,6 +99,8 @@ class CVAE(ModelBase):
         Fake = self.D(z)
         if not self.isTrain:
             return Fake
+
+        Fake = transformer_Arcface(Fake)
 
         loss_Rec = self.Recloss(Fake, img_source)
         loss_KL = self.KLloss(mu, log_var)
