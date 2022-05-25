@@ -9,6 +9,7 @@ sys.path.append(root_path)
 import torch
 from torch import nn
 import torch.nn.functional as F
+from torchvision import transforms
 from utils import loss
 from utils.IDExtract import IDExtractor
 from . import networks
@@ -32,6 +33,9 @@ class CVAE(ModelBase):
             device = torch.device(self.gpu_ids[0])
         else:
             device = torch.device("cpu")
+
+
+        self.INnorm = transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))  # normalization of ImageNet
 
         #Merge 1
 
@@ -92,7 +96,7 @@ class CVAE(ModelBase):
         if not self.isTrain:
             return Fake
 
-        Fake = self.ID_extract.INnorm(Fake)
+        Fake = self.INnorm(Fake)
 
         loss_Rec = self.Recloss(Fake, img_source)
         loss_KL = self.KLloss(mu, log_var)
