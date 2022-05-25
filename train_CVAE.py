@@ -127,6 +127,7 @@ class Trainer:
                 self.model.module.M2.eval()
                 self.model.module.D.eval()
                 self.model.module.eval()
+                self.model.module.isTrain = False
                 with torch.no_grad():
                     img_source = img_source[:self.sample_size]
                     latent_ID = latent_ID[:self.sample_size]
@@ -143,7 +144,7 @@ class Trainer:
                         imgs.append(save_img[i, ...])
 
                         image_infer = img_source[i, ...].repeat(self.sample_size, 1, 1, 1)
-                        img_fake = self.model.module(img_source, image_infer, latent_ID, latent_ID[i,...]).cpu().numpy()
+                        img_fake = self.model.module(image_infer, img_source, latent_ID[i,...], latent_ID).cpu().numpy()
 
                         for j in range(self.sample_size):
                             imgs.append(img_fake[j, ...])
@@ -151,7 +152,7 @@ class Trainer:
                     print("Save test data for iter {}.".format(self.total_iter))
                     imgs = np.stack(imgs, axis=0).transpose(0, 2, 3, 1)
                     plot_batch(imgs, os.path.join(self.sample_path, 'step_' + str(self.total_iter) + '.jpg'))
-
+                self.model.module.isTrain = True
 
 
                 # visuals = OrderedDict([('source_img', utils.tensor2im(img_target[0])),
@@ -241,7 +242,7 @@ def test(opt, model, loader, epoch_idx, total_iter, visualizer):
                     imgs.append(save_img[i, ...])
 
                     image_infer = img_source[i, ...].repeat(sample_size, 1, 1, 1)
-                    img_fake = model.module(img_source, image_infer, latent_ID, latent_ID[i,...]).cpu().numpy()
+                    img_fake = model.module(image_infer, img_source, latent_ID[i,...], latent_ID).cpu().numpy()
 
                     for j in range(sample_size):
                         imgs.append(img_fake[j, ...])

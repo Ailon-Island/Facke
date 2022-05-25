@@ -3,6 +3,8 @@ utils/Arcface/arcface_checkpoint.tar
 utils/Arcface/arcface_checkpoint.tar
 utils/Arcface/arcface_checkpoint.tar
 utils/Arcface/arcface_checkpoint.tar
+utils/guided_diffusion/models/*
+utils/guided_diffusion/models
 utils/insightface_func/models/antelope/glintr100.onnx
 datasets/*
 *.patch
@@ -26,4 +28,8 @@ output/source.jpg
 output/target.jpg
 output/result.jpg
 options/__pycache__/base_options.cpython-38.pyc
+*.pyc
+*.xml
+*.iml
+*.pyc
 *.pyc

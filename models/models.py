@@ -12,7 +12,9 @@ def create_model(opt):
     elif opt.model == 'CVAE':
         from .CVAE.model import CVAE
         model = CVAE()
-    model.init(opt)
+    elif opt.model == 'ILVR':
+        from .ILVR import ILVR
+        model = ILVR(opt)
 
     if opt.isTrain and len(opt.gpu_ids):
         model = nn.DataParallel(model)

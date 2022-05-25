@@ -23,9 +23,12 @@ class VGGFace2HQDataset(DatasetBase):
         self.auto_same_ID = auto_same_ID
         self.intra_ID_random = not opt.no_intra_ID_random
         self.sample_cnt = 0
-        self.label_ranges = [len(self.dataset.imgs)] * (len(self.dataset.classes) + 1)
-        for i, target in enumerate(self.dataset.targets):
-            self.label_ranges[target] = min(self.label_ranges[target], i)
+        self.num_classes = len(self.dataset.classes)
+        self.label_ranges = np.zeros(self.num_classes + 1)
+        self.dataset.targets = np.array(self.dataset.targets)
+        self.label_ranges = np.concatenate([np.array([0]),
+                                            np.argwhere(self.dataset.targets[1:] != self.dataset.targets[:-1]).reshape(-1) + 1,
+                                            np.array([len(self.dataset.imgs)])])
         self.ID_extract = None
 
         random.seed(random_seed)

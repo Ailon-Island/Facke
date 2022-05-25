@@ -2,6 +2,8 @@ import  os
 import sys
 import time
 
+
+
 root_path = os.path.join("..", "..")
 sys.path.append(root_path)
 import torch
@@ -56,6 +58,10 @@ class CVAE(ModelBase):
         params = list(self.M1.parameters()) + list(self.E.parameters()) + list(self.M2.parameters()) + list(self.D.parameters())
         self.optim = torch.optim.Adam(params, lr = opt.lr, betas=(opt.beta1, 0.999))
 
+        self.old_lr = opt.lr
+
+        if opt.verbose:
+            print("CVAE model initiated.")
     # def loss_function(self, recons, input, mu, log_var, weight):
     #     recons_loss = F.mse_loss(recons, input)
     #     kld_loss = torch.mean(-0.5 * torch.sum(1+ log_var - mu**2 - log_var.exp(),dim=1),dim = 0)
@@ -86,6 +92,8 @@ class CVAE(ModelBase):
         if not self.isTrain:
             return Fake
 
+        Fake = self.ID_extract.INnorm(Fake)
+
         loss_Rec = self.Recloss(Fake, img_source)
         loss_KL = self.KLloss(mu, log_var)
 
@@ -96,3 +104,12 @@ class CVAE(ModelBase):
         self.save_net(self.E, 'E', epoch_label, self.gpu_ids)
         self.save_net(self.M2, 'M2', epoch_label, self.gpu_ids)
         self.save_net(self.D, 'D', epoch_label, self.gpu_ids)
+
+    def update_lr(self):
+        lr_decay = self.opt.lr / (self.opt.niter_decay + 1)
+        lr = self.old_lr - lr_decay
+
+        for param_group in self.optim.param_groups:
+            param_group['lr'] = lr
+
+        self.old_lr = lr

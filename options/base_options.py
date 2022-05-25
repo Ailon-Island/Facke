@@ -78,6 +78,36 @@ class BaseOptions():
         self.parser.add_argument('--semantic_nc', type=int, default=3, help='number of clusters for features')
         self.initialized = True
 
+        # for ILVR
+        self.parser.add_argument('--noise_schedule', type=str, default='linear')
+        self.parser.add_argument('--DDPM_pth', type=str, default='utils/guided_diffusion/models/ffhq_10m.pt')
+        self.parser.add_argument('--channel_mult', type=str, default="")
+        self.parser.add_argument('--attention_resolutions', type=str, default="16")
+        self.parser.add_argument('--timestep_respacing', type=str, default="100")
+        self.parser.add_argument('--class_cond', action='store_true')
+        self.parser.add_argument('--use_checkpoint', action='store_true')
+        self.parser.add_argument('--use_ddim', action='store_true')
+        self.parser.add_argument('--use_kl', action='store_true')
+        self.parser.add_argument('--predict_xstart', action='store_true')
+        self.parser.add_argument('--rescale_timesteps', action='store_true')
+        self.parser.add_argument('--rescale_learned_sigmas', action='store_true')
+        self.parser.add_argument('--save_latents', action='store_true')
+        self.parser.add_argument('--learn_sigma', action='store_true')
+        self.parser.add_argument('--resblock_updown', action='store_true')
+        self.parser.add_argument('--use_scale_shift_norm', action='store_true')
+        self.parser.add_argument('--use_new_attention_order', action='store_true')
+        self.parser.add_argument('--clip_denoised', action='store_true')
+        self.parser.add_argument('--down_N', type=int, default=32)
+        self.parser.add_argument('--diffusion_steps', type=int, default=1000)
+        self.parser.add_argument('--dropout', type=float, default=0.0)
+        self.parser.add_argument('--num_channels', type=int, default=128)
+        self.parser.add_argument('--num_heads', type=int, default=128)
+        self.parser.add_argument('--num_heads_upsample', type=int, default=-1)
+        self.parser.add_argument('--num_head_channels', type=int, default=64)
+        self.parser.add_argument('--num_res_blocks', type=int, default=1)
+        self.parser.add_argument('--range_t', type=int, default=0)
+
+
     def parse(self, save=True):
         if not self.initialized:
             self.initialize()
