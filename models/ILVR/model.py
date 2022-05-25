@@ -84,7 +84,7 @@ class ILVR(ModelBase):
 
     def swap(self, img_source, img_target):
         opt = self.opt
-        device = self.device
+        device = img_source.device
         diffusion = self.diffusion
         model = self.model
         resizers = self.resizers
@@ -113,7 +113,6 @@ class ILVR(ModelBase):
     def forward(self, img, cond = None):
         #self.optim.zero_grad()
         # for i in range(0, img.shape[0], self.microimg):
-        img = img.to(self.device)
 
         if cond is None:
             cond = {}
