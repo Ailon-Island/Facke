@@ -1,5 +1,4 @@
 import torch.cuda
-
 from torch import nn
 
 from utils.guided_diffusion.script_util import (
@@ -11,16 +10,25 @@ from utils.guided_diffusion.script_util import (
 from utils.resizer import Resizer
 import math
 
-class ILVR(nn.Module):
-    def __init__(self, opt=None):
+from ..model_base import ModelBase
+
+class ILVR(ModelBase):
+    def __init__(self):
         super(ILVR, self).__init__()
+
+
+    def init(self, opt):
+        if opt.verbose:
+            print('Initializing DDPM for ILVR...')
         
         self.opt = opt
-        if torch.cuda.is_available():
-            device = 'cuda'
-        else:
-            device = 'cpu'
-        self.device = device
+
+        self.isTrain = opt.isTrain
+        self.gpu_ids = opt.gpu_ids
+
+        self.iter = 0
+
+        self.device = torch.device(self.gpu_ids[0])
 
         model, diffusion = create_model_and_diffusion(
             **args_to_dict(opt, model_and_diffusion_defaults().keys())
@@ -41,9 +49,11 @@ class ILVR(nn.Module):
         up = Resizer(shape_d, opt.down_N).to(next(self.model.parameters()).device)
         self.resizers = (down, up)
 
+        schedule_sampler = create_named_schedule_sampler(args.schedule_sampler, diffusion)
 
 
-    def forward(self, img_source, img_target):
+
+    def swap(self, img_source, img_target):
         opt = self.opt
         device = self.device
         diffusion = self.diffusion
@@ -69,6 +79,10 @@ class ILVR(nn.Module):
         )
 
         return sample
+
+
+    def forward(self, img):
+        pass
 
 
 

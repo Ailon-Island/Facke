@@ -1,3 +1,6 @@
+"""
+Train a diffusion model on images.
+"""
 import os
 import shutil
 import numpy as np
@@ -20,36 +23,126 @@ import tqdm
 import warnings
 from utils.loss import IDLoss
 
+from utils.guided_diffusion import logger
+from utils.guided_diffusion.image_datasets import load_data
+from utils.guided_diffusion.resample import create_named_schedule_sampler
+from utils.guided_diffusion.script_util import (
+    model_and_diffusion_defaults,
+    create_model_and_diffusion,
+    args_to_dict,
+    add_dict_to_argparser,
+)
+from utils.guided_diffusion.train_util import TrainLoop
+import torch.cuda
 
 
-detransformer_Arcface = transforms.Compose([
-    transforms.Normalize([0, 0, 0], [1 / 0.229, 1 / 0.224, 1 / 0.225]),
-    transforms.Normalize([-0.485, -0.456, -0.406], [1, 1, 1])
-])
 
+class Transform:
+    def __int__(self):
+        super(Transform, self).__int__()
+
+    def __call__(self, x):
+        return x * 2 - 1
+
+
+
+class DeTransform:
+    def __int__(self):
+        super(DeTransform, self).__int__()
+
+    def __call__(self, x):
+        return (x + 1) / 2
+
+
+
+def main():
+    opt = TrainOptions.
+
+    if torch.cuda.is_available():
+        device = 'cuda'
+    else:
+        device = 'cpu'
+    logger.configure()
+
+    logger.log("creating model and diffusion...")
+    model, diffusion = create_model_and_diffusion(
+        **args_to_dict(args, model_and_diffusion_defaults().keys())
+    )
+    model.to(device)
+    schedule_sampler = create_named_schedule_sampler(args.schedule_sampler, diffusion)
+
+    logger.log("creating data loader...")
+    data = load_data(
+        data_dir=args.data_dir,
+        batch_size=args.batch_size,
+        image_size=args.image_size,
+        class_cond=args.class_cond,
+    )
+
+    logger.log("training...")
+    TrainLoop(
+        model=model,
+        diffusion=diffusion,
+        data=data,
+        batch_size=args.batch_size,
+        microbatch=args.microbatch,
+        lr=args.lr,
+        ema_rate=args.ema_rate,
+        log_interval=args.log_interval,
+        save_interval=args.save_interval,
+        resume_checkpoint=args.resume_checkpoint,
+        use_fp16=args.use_fp16,
+        fp16_scale_growth=args.fp16_scale_growth,
+        schedule_sampler=schedule_sampler,
+        weight_decay=args.weight_decay,
+        lr_anneal_steps=args.lr_anneal_steps,
+        distributed=False,
+        device=device,
+    ).run_loop()
+
+
+def create_argparser():
+    defaults = dict(
+        data_dir="",
+        schedule_sampler="uniform",
+        lr=1e-4,
+        weight_decay=0.0,
+        lr_anneal_steps=0,
+        batch_size=1,
+        microbatch=-1,  # -1 disables microbatches
+        ema_rate="0.9999",  # comma-separated list of EMA values
+        log_interval=10,
+        save_interval=10000,
+        resume_checkpoint="",
+        use_fp16=False,
+        fp16_scale_growth=1e-3,
+    )
+    defaults.update(model_and_diffusion_defaults())
+    parser = argparse.ArgumentParser()
+    add_dict_to_argparser(parser, defaults)
+    return parser
 
 
 class Trainer:
     def __init__(self, loader, model, opt, start_epoch, epoch_iter, visualizer):
         super(Trainer, self).__init__()
-        self.model              = model
-        self.opt                = opt
-        self.loader             = loader
-        self.losses             = []
-        self.start_epoch        = start_epoch
-        self.start_epoch_iter   = epoch_iter
-        self.total_iter         = (start_epoch - 1) * len(loader) + epoch_iter
-        self.memory_last        = 0
-        self.memory_first       = None
-        self.visualizer         = visualizer
-        self.sample_path        = os.path.join(opt.checkpoints_dir, opt.name, 'samples', 'train')
-        self.sample_size        = min(8, opt.batchSize)
+        self.model = model
+        self.opt = opt
+        self.loader = loader
+        self.losses = []
+        self.start_epoch = start_epoch
+        self.start_epoch_iter = epoch_iter
+        self.total_iter = (start_epoch - 1) * len(loader) + epoch_iter
+        self.memory_last = 0
+        self.memory_first = None
+        self.visualizer = visualizer
+        self.sample_path = os.path.join(opt.checkpoints_dir, opt.name, 'samples', 'train')
+        self.sample_size = min(8, opt.batchSize)
 
         if opt.verbose:
             print('Trainer initialized.')
         if opt.debug:
             print('Model instance in trainer iter: {}.'.format(self.model.module.iter))
-
 
     def train(self, epoch_idx):
         opt = self.opt
@@ -60,13 +153,14 @@ class Trainer:
             print('Model instance to be trained iter: {}.'.format(self.model.module.iter))
 
         epoch_start_time = time.time()
-        epoch_iter      = self.start_epoch_iter if epoch_idx == self.start_epoch else 0
-        visualizer      = self.visualizer
-        display_delta   = self.total_iter % opt.display_freq
-        print_delta     = self.total_iter % opt.print_freq
-        save_delta      = self.total_iter % opt.save_latest_freq
+        epoch_iter = self.start_epoch_iter if epoch_idx == self.start_epoch else 0
+        visualizer = self.visualizer
+        display_delta = self.total_iter % opt.display_freq
+        print_delta = self.total_iter % opt.print_freq
+        save_delta = self.total_iter % opt.save_latest_freq
 
-        for batch_idx, ((img_source, img_target), (latent_ID, latent_ID_target), is_same_ID) in enumerate(self.loader, start=1):
+        for batch_idx, ((img_source, img_target), (latent_ID, latent_ID_target), is_same_ID) in enumerate(self.loader,
+                                                                                                          start=1):
             self.model.train()
             if opt.debug:
                 print('Batch {}: model instance to be trained iter: {}.'.format(batch_idx, self.model.module.iter))
@@ -75,13 +169,14 @@ class Trainer:
                 iter_start_time = time.time()
 
             if len(opt.gpu_ids):
-                img_source, img_target, latent_ID, latent_ID_target = img_source.to('cuda'), img_target.to('cuda'), latent_ID.to('cuda'), latent_ID_target.to('cuda')
+                img_source, img_target, latent_ID, latent_ID_target = img_source.to('cuda'), img_target.to(
+                    'cuda'), latent_ID.to('cuda'), latent_ID_target.to('cuda')
 
             # count iterations
-            batch_size              = len(is_same_ID)
-            self.total_iter        += batch_size
-            self.model.module.iter  = self.total_iter
-            epoch_iter             += batch_size
+            batch_size = len(is_same_ID)
+            self.total_iter += batch_size
+            self.model.module.iter = self.total_iter
+            epoch_iter += batch_size
 
             if opt.ID_check:
                 print(is_same_ID)
@@ -99,7 +194,8 @@ class Trainer:
             loss_dict = get_loss_dict(self.model.module.loss_names, losses, opt)
 
             # calculate final loss scalar
-            loss_G = loss_dict['G_GAN'] + loss_dict.get('G_VGG', 0) + loss_dict.get('G_FM', 0) + loss_dict['G_ID'] + loss_dict['G_rec'] * is_same_ID
+            loss_G = loss_dict['G_GAN'] + loss_dict.get('G_VGG', 0) + loss_dict.get('G_FM', 0) + loss_dict['G_ID'] + \
+                     loss_dict['G_rec'] * is_same_ID
             loss_D = (loss_dict['D_fake'] + loss_dict['D_real']) + loss_dict['D_GP']
 
             ############ BACKWARD ############
@@ -152,15 +248,13 @@ class Trainer:
                     imgs = np.stack(imgs, axis=0).transpose(0, 2, 3, 1)
                     plot_batch(imgs, os.path.join(self.sample_path, 'step_' + str(self.total_iter) + '.jpg'))
 
-
-
                 # visuals = OrderedDict([('source_img', utils.tensor2im(img_target[0])),
                 #                        ('id_img', utils.tensor2im(img_source[0])),
                 #                        ('generated_img', utils.tensor2im(img_fake.data[0]))
                 #                        ])
                 # visualizer.display_current_results(visuals, epoch_idx, self.total_iter)
 
-           # save model
+            # save model
             if (self.total_iter % opt.save_latest_freq == save_delta):
                 self.model.module.save('latest')
                 self.model.module.save('{}_iter'.format(self.total_iter))
@@ -170,7 +264,8 @@ class Trainer:
             if opt.memory_check:
                 if self.memory_first is None:
                     self.memory_first = torch.cuda.memory_allocated()
-                print("Memory increase: {}MiB".format((torch.cuda.memory_allocated() - self.memory_last) / 1024. / 1024.))
+                print(
+                    "Memory increase: {}MiB".format((torch.cuda.memory_allocated() - self.memory_last) / 1024. / 1024.))
                 print("Total memory increase: {}MiB".format(
                     (torch.cuda.memory_allocated() - self.memory_first) / 1024. / 1024.))
                 self.memory_last = torch.cuda.memory_allocated()
@@ -192,18 +287,20 @@ def test(opt, model, loader, epoch_idx, total_iter, visualizer):
     print('Testing...')
     if opt.debug:
         print('Model instance being tested iter: {}.'.format(model.module.iter))
-    for batch_idx, ((img_source, img_target), (latent_ID, latent_ID_target), is_same_ID) in enumerate(tqdm.tqdm(loader)):
+    for batch_idx, ((img_source, img_target), (latent_ID, latent_ID_target), is_same_ID) in enumerate(
+            tqdm.tqdm(loader)):
         batch_size = len(is_same_ID)
         test_iter += batch_size
 
         if len(opt.gpu_ids):
-            img_source, img_target, latent_ID, latent_ID_target = img_source.to('cuda'), img_target.to('cuda'), latent_ID.to('cuda'), latent_ID_target.to('cuda')
+            img_source, img_target, latent_ID, latent_ID_target = img_source.to('cuda'), img_target.to(
+                'cuda'), latent_ID.to('cuda'), latent_ID_target.to('cuda')
 
         is_same_ID = is_same_ID[0].detach().item()
 
         ########### FORWARD ###########
         [losses, _] = model(img_source, img_target, latent_ID, latent_ID_target)
-        
+
         # gather losses
         losses = [torch.mean(x) if not isinstance(x, int) else x for x in losses]
         losses = [loss.detach().cpu().item() for loss in losses]
@@ -262,32 +359,32 @@ def test(opt, model, loader, epoch_idx, total_iter, visualizer):
 
 
 
-
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     warnings.filterwarnings("ignore")
     torch.backends.cudnn.benchmark = True
     os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
     opt = TrainOptions().parse()
+    opt.model = 'ILVR'
+    opt.no_intra_ID_random = True
 
     if len(opt.gpu_ids):
         print('GPU available: {}'.format(torch.cuda.is_available()))
         print('GPU count: {}'.format(torch.cuda.device_count()))
 
-    transformer_Arcface = transforms.Compose([
+    transform = transforms.Compose([
         transforms.ToTensor(),
         transforms.Resize((opt.image_size, opt.image_size)),
-        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+        Transform(),
     ])
 
     if opt.fp16:
         from torch.cuda.amp import autocast
 
     print("Generating data loaders...")
-    train_data = VGGFace2HQDataset(opt, isTrain=True, transform=transformer_Arcface, is_same_ID=True, auto_same_ID=True)
+    train_data = VGGFace2HQDataset(opt, isTrain=True, transform=transform, is_same_ID=True, auto_same_ID=False)
     train_loader = DataLoader(dataset=train_data, batch_size=opt.batchSize, shuffle=True, num_workers=opt.nThreads, worker_init_fn=train_data.set_worker)
-    test_data = VGGFace2HQDataset(opt, isTrain=False, transform=transformer_Arcface, is_same_ID=True, auto_same_ID=True)
+    test_data = VGGFace2HQDataset(opt, isTrain=False, transform=transform, is_same_ID=True, auto_same_ID=False)
     test_loader = DataLoader(dataset=test_data, batch_size=opt.batchSize, shuffle=True, num_workers=opt.nThreads, worker_init_fn=test_data.set_worker)
     print("Dataloaders ready.")
     opt.max_dataset_size = min(opt.max_dataset_size, len(train_data))
@@ -368,7 +465,3 @@ if __name__ == '__main__':
 
         # test model
         test(opt, model, test_loader, epoch_idx, trainer.total_iter, visualizer)
-
-
-
-

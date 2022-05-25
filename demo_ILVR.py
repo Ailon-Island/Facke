@@ -108,7 +108,7 @@ if __name__ == '__main__':
                 imgs.append(save_img[i, ...])
 
                 image_infer = img_source[i, ...].repeat(sample_size, 1, 1, 1)
-                img_fake = model(img_source, image_infer)
+                img_fake = model.swap(img_source, image_infer)
                 img_fake = (detransform(img_fake.cpu())).numpy()
 
                 for j in range(sample_size):
