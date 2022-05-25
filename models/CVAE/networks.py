@@ -107,8 +107,8 @@ class Encoder(nn.Module):
         )
 
         self.encoder = nn.Sequential(self.conv0, self.conv1, self.down1,self.down2,self.down3)
-        self.mu = nn.Linear(512*((img_size/32)**2), latent_size)
-        self.log = nn.Linear(512*((img_size/32)**2), latent_size)
+        self.mu = nn.Linear(512*((img_size//32)**2), latent_size)
+        self.log = nn.Linear(512*((img_size//32)**2), latent_size)
     def forward(self, x):
         # print("=========ENCODER FORWARD=========")
         # print("BEFORE DOWNSAMPLE", x.shape)
@@ -123,7 +123,8 @@ class Decoder(nn.Module):
     def __init__(self, in_channels=512, out_channels = 3, img_size = 224, activation=nn.LeakyReLU(0.2, True)):
         super(Decoder,self).__init__()
         upsample = nn.Upsample(scale_factor=2, mode='bilinear')
-        self.inputLayer = nn.Linear(in_channels, 512 *((img_size /32)**2))
+        self.img_size = img_size
+        self.inputLayer = nn.Linear(in_channels, 512 *((img_size//32)**2))
         self.up1 = nn.Sequential(
             upsample,
             nn.Conv2d(in_channels= 512, out_channels = 256, kernel_size= 3, stride = 1, padding  = 1),
@@ -162,7 +163,7 @@ class Decoder(nn.Module):
         # print("ORIGIN ",x.shape)
         x = self.inputLayer(x)
         # print("AFTER inputLayer", x.shape)
-        x = x.view(-1,512,7,7)
+        x = x.view(-1,512,(self.img_size//32),(self.img_size//32))
         # x = self.up1(x)
         # print("AFTER up1", x.shape)
         # x = self.up2(x)
