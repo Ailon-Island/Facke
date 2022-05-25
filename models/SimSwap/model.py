@@ -167,9 +167,9 @@ class SimSwapGAN(ModelBase):
 
 
     def load(self, epoch_label):
-        self.save_net(self.G, 'G', epoch_label, self.gpu_ids)
-        self.save_net(self.D1, 'D1', epoch_label, self.gpu_ids)
-        self.save_net(self.D2, 'D2', epoch_label, self.gpu_ids)
+        self.load_net(self.G, 'G', epoch_label, self.gpu_ids)
+        self.load_net(self.D1, 'D1', epoch_label, self.gpu_ids)
+        self.load_net(self.D2, 'D2', epoch_label, self.gpu_ids)
 
 
     def unlock_G(self):

@@ -1,3 +1,7 @@
+###############################################################################
+# Code adapted and modified from
+# https://github.com/jychoi118/ilvr_adm
+###############################################################################
 """
 Train a diffusion model on images.
 """
@@ -55,74 +59,6 @@ class DeTransform:
 
 
 
-def main():
-    opt = TrainOptions.
-
-    if torch.cuda.is_available():
-        device = 'cuda'
-    else:
-        device = 'cpu'
-    logger.configure()
-
-    logger.log("creating model and diffusion...")
-    model, diffusion = create_model_and_diffusion(
-        **args_to_dict(args, model_and_diffusion_defaults().keys())
-    )
-    model.to(device)
-    schedule_sampler = create_named_schedule_sampler(args.schedule_sampler, diffusion)
-
-    logger.log("creating data loader...")
-    data = load_data(
-        data_dir=args.data_dir,
-        batch_size=args.batch_size,
-        image_size=args.image_size,
-        class_cond=args.class_cond,
-    )
-
-    logger.log("training...")
-    TrainLoop(
-        model=model,
-        diffusion=diffusion,
-        data=data,
-        batch_size=args.batch_size,
-        microbatch=args.microbatch,
-        lr=args.lr,
-        ema_rate=args.ema_rate,
-        log_interval=args.log_interval,
-        save_interval=args.save_interval,
-        resume_checkpoint=args.resume_checkpoint,
-        use_fp16=args.use_fp16,
-        fp16_scale_growth=args.fp16_scale_growth,
-        schedule_sampler=schedule_sampler,
-        weight_decay=args.weight_decay,
-        lr_anneal_steps=args.lr_anneal_steps,
-        distributed=False,
-        device=device,
-    ).run_loop()
-
-
-def create_argparser():
-    defaults = dict(
-        data_dir="",
-        schedule_sampler="uniform",
-        lr=1e-4,
-        weight_decay=0.0,
-        lr_anneal_steps=0,
-        batch_size=1,
-        microbatch=-1,  # -1 disables microbatches
-        ema_rate="0.9999",  # comma-separated list of EMA values
-        log_interval=10,
-        save_interval=10000,
-        resume_checkpoint="",
-        use_fp16=False,
-        fp16_scale_growth=1e-3,
-    )
-    defaults.update(model_and_diffusion_defaults())
-    parser = argparse.ArgumentParser()
-    add_dict_to_argparser(parser, defaults)
-    return parser
-
-
 class Trainer:
     def __init__(self, loader, model, opt, start_epoch, epoch_iter, visualizer):
         super(Trainer, self).__init__()
@@ -159,8 +95,7 @@ class Trainer:
         print_delta = self.total_iter % opt.print_freq
         save_delta = self.total_iter % opt.save_latest_freq
 
-        for batch_idx, ((img_source, img_target), (latent_ID, latent_ID_target), is_same_ID) in enumerate(self.loader,
-                                                                                                          start=1):
+        for batch_idx, ((img_source, _), (_, _), _) in enumerate(self.loader, start=1):
             self.model.train()
             if opt.debug:
                 print('Batch {}: model instance to be trained iter: {}.'.format(batch_idx, self.model.module.iter))
@@ -169,50 +104,39 @@ class Trainer:
                 iter_start_time = time.time()
 
             if len(opt.gpu_ids):
-                img_source, img_target, latent_ID, latent_ID_target = img_source.to('cuda'), img_target.to(
-                    'cuda'), latent_ID.to('cuda'), latent_ID_target.to('cuda')
+                img_source = img_source.to('cuda')
 
             # count iterations
-            batch_size = len(is_same_ID)
+            batch_size = img_source.shape[0]
             self.total_iter += batch_size
             self.model.module.iter = self.total_iter
             epoch_iter += batch_size
 
-            if opt.ID_check:
-                print(is_same_ID)
-            is_same_ID = is_same_ID[0].detach().item()
-
             ########### FORWARD ###########
-            [losses, _] = model(img_source, img_target, latent_ID, latent_ID_target)
+            loss_dict = model(img_source)
 
             ############ LOSSES ############
             # gather losses
-            losses = [torch.mean(x) if not isinstance(x, int) else x for x in losses]
+            for k, v in loss_dict.items():
+                loss_dict[k] = torch.mean(v) if not isinstance(v, int) else v
 
             # loss dictionary
             # loss_dict = dict(zip(self.model.module.loss_names, losses))
-            loss_dict = get_loss_dict(self.model.module.loss_names, losses, opt)
 
-            # calculate final loss scalar
-            loss_G = loss_dict['G_GAN'] + loss_dict.get('G_VGG', 0) + loss_dict.get('G_FM', 0) + loss_dict['G_ID'] + \
-                     loss_dict['G_rec'] * is_same_ID
-            loss_D = (loss_dict['D_fake'] + loss_dict['D_real']) + loss_dict['D_GP']
 
             ############ BACKWARD ############
-            self.model.module.optim_G.zero_grad()
-            loss_G.backward()
-            self.model.module.optim_G.step()
-            self.model.module.optim_D.zero_grad()
-            loss_D.backward()
-            self.model.module.optim_D.step()
+            self.model.module.optim.zero_grad()
+            loss_dict['loss'].backward()
+            self.model.module.optim.step()
 
             # save loss
+            losses = [v for k, v in sorted(loss_dict.items())]
             losses = [loss if isinstance(loss, int) else loss.detach().cpu().item() for loss in losses]
             self.losses += [losses]
 
             # print result
             if self.total_iter % opt.print_freq == print_delta:
-                errors = get_loss_dict(self.model.module.loss_names, losses, opt)
+                errors = loss_dict
                 avg_iter_time = (time.time() - iter_start_time) / opt.print_freq
                 visualizer.print_current_errors(epoch_idx, epoch_iter, errors, avg_iter_time)
                 visualizer.plot_current_errors(errors, self.total_iter)
@@ -225,12 +149,11 @@ class Trainer:
                 self.model.module.G.eval()
                 with torch.no_grad():
                     img_source = img_source[:self.sample_size]
-                    latent_ID = latent_ID[:self.sample_size]
 
                     imgs = []
                     zero_img = (torch.zeros_like(img_source[0, ...]))
                     imgs.append(zero_img.cpu().numpy())
-                    save_img = (detransformer_Arcface(img_source.cpu())).numpy()
+                    save_img = (detransform(img_source.cpu())).numpy()
 
                     for r in range(self.sample_size):
                         imgs.append(save_img[r, ...])
@@ -239,7 +162,8 @@ class Trainer:
                         imgs.append(save_img[i, ...])
 
                         image_infer = img_source[i, ...].repeat(self.sample_size, 1, 1, 1)
-                        img_fake = self.model.module.G(image_infer, latent_ID).cpu().numpy()
+                        img_fake = self.model.module.swap(img_source, image_infer)
+                        img_fake = (detransform(img_fake.cpu())).numpy()
 
                         for j in range(self.sample_size):
                             imgs.append(img_fake[j, ...])
@@ -270,6 +194,10 @@ class Trainer:
                     (torch.cuda.memory_allocated() - self.memory_first) / 1024. / 1024.))
                 self.memory_last = torch.cuda.memory_allocated()
 
+
+            # update ema
+            self.model.module.update_ema()
+
             # early stop
             if epoch_iter >= opt.max_dataset_size:
                 break
@@ -287,32 +215,29 @@ def test(opt, model, loader, epoch_idx, total_iter, visualizer):
     print('Testing...')
     if opt.debug:
         print('Model instance being tested iter: {}.'.format(model.module.iter))
-    for batch_idx, ((img_source, img_target), (latent_ID, latent_ID_target), is_same_ID) in enumerate(
+    for batch_idx, ((img_source, _), (_, _), _) in enumerate(
             tqdm.tqdm(loader)):
-        batch_size = len(is_same_ID)
+        batch_size = img_source.shape[0]
         test_iter += batch_size
 
         if len(opt.gpu_ids):
-            img_source, img_target, latent_ID, latent_ID_target = img_source.to('cuda'), img_target.to(
-                'cuda'), latent_ID.to('cuda'), latent_ID_target.to('cuda')
-
-        is_same_ID = is_same_ID[0].detach().item()
+            img_source = img_source.to('cuda')
 
         ########### FORWARD ###########
-        [losses, _] = model(img_source, img_target, latent_ID, latent_ID_target)
+        loss_dict = model(img_source)
 
         # gather losses
-        losses = [torch.mean(x) if not isinstance(x, int) else x for x in losses]
-        losses = [loss.detach().cpu().item() for loss in losses]
+        for k, v in loss_dict.items():
+            loss_dict[k] = torch.mean(v) if not isinstance(v, int) else v
 
         # save loss
+        losses = [v for k, v in sorted(loss_dict.items())]
+        losses = [loss if isinstance(loss, int) else loss.detach().cpu().item() for loss in losses]
         if not len(test_losses):
             test_losses = losses
         else:
-            test_losses = [
-                test_loss + loss * batch_size if is_same_ID or loss_name != 'G_rec' else
-                test_loss
-                for loss_name, test_loss, loss in zip(model.module.loss_names, test_losses, losses)]
+            test_losses = [test_loss + loss * batch_size
+                           for test_loss, loss in zip(test_losses, losses)]
 
         # display images
         if batch_idx == 0:
@@ -324,12 +249,11 @@ def test(opt, model, loader, epoch_idx, total_iter, visualizer):
 
             with torch.no_grad():
                 img_source = img_source[:sample_size]
-                latent_ID = latent_ID[:sample_size]
 
                 imgs = []
                 zero_img = (torch.zeros_like(img_source[0, ...]))
                 imgs.append(zero_img.cpu().numpy())
-                save_img = (detransformer_Arcface(img_source.cpu())).numpy()
+                save_img = (detransform(img_source.cpu())).numpy()
 
                 for r in range(sample_size):
                     imgs.append(save_img[r, ...])
@@ -338,7 +262,11 @@ def test(opt, model, loader, epoch_idx, total_iter, visualizer):
                     imgs.append(save_img[i, ...])
 
                     image_infer = img_source[i, ...].repeat(sample_size, 1, 1, 1)
-                    img_fake = model.module.G(image_infer, latent_ID).cpu().numpy()
+                    img_fake = model.module.swap(img_source, image_infer)
+                    img_fake = (detransform(img_fake.cpu())).numpy()
+                    #
+                    # image_infer = img_source[i, ...].repeat(sample_size, 1, 1, 1)
+                    # img_fake = model.module.G(image_infer, latent_ID).cpu().numpy()
 
                     for j in range(sample_size):
                         imgs.append(img_fake[j, ...])
@@ -377,6 +305,8 @@ if __name__ == "__main__":
         transforms.Resize((opt.image_size, opt.image_size)),
         Transform(),
     ])
+
+    detransform = DeTransform()
 
     if opt.fp16:
         from torch.cuda.amp import autocast

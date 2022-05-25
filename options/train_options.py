@@ -10,7 +10,7 @@ class TrainOptions(BaseOptions):
         # for displays
         self.parser.add_argument('--display_freq', type=int, default=10000, help='frequency of showing training results on screen')
         self.parser.add_argument('--display_freq_test', type=int, default=10000, help='frequency of showing testing results on screen')
-        self.parser.add_argument('--print_freq', type=int, default=200, help='frequency of showing training results on console')
+        self.parser.add_argument('--print_freq', type=int, default=800, help='frequency of showing training results on console')
         self.parser.add_argument('--save_latest_freq', type=int, default=10000, help='frequency of saving the latest results')
         self.parser.add_argument('--save_epoch_freq', type=int, default=1, help='frequency of saving checkpoints at the end of epochs')
         self.parser.add_argument('--no_html', action='store_true', help='do not save intermediate training results to [opt.checkpoints_dir]/[opt.name]/web/')
@@ -44,5 +44,11 @@ class TrainOptions(BaseOptions):
         self.parser.add_argument('--pool_size', type=int, default=0, help='the size of image buffer that stores previously generated images')
         self.parser.add_argument('--times_G', type=int, default=1,
                                  help='time of training generator before traning discriminator')
+
+        # for ILVR
+        self.parser.add_argument('--ema_rate', type=str, default="0.9999")
+        self.parser.add_argument('--schedule_sampler', type=str, default="uniform")
+        self.parser.add_argument('--weight_decay', type=float, default=0.0)
+
 
         self.isTrain = True
