@@ -25,7 +25,7 @@ class CVAE(ModelBase):
 
         self.isTrain = opt.isTrain
         self.gpu_ids = opt.gpu_ids
-
+        self.img_size = opt.image_size
         self.iter = 0
 
         if torch.cuda.is_available():
@@ -35,10 +35,10 @@ class CVAE(ModelBase):
 
         #Merge 1
 
-        self.M1 = networks.Merge_Image(in_channels = 3)
+        self.M1 = networks.Merge_Image(in_channels = 3, img_size= self.img_size)
         self.M1 = self.M1.to(device)
         #Encoder
-        self.E = networks.Encoder(in_channels= 4)
+        self.E = networks.Encoder(in_channels= 4, img_size= self.img_size)
         self.E = self.E.to(device)
 
         #Encoder -> MERGE -> DECODER
@@ -46,7 +46,7 @@ class CVAE(ModelBase):
         self.M2 = self.M2.to(device)
     
         #Decoder
-        self.D = networks.Decoder()
+        self.D = networks.Decoder(img_size=self.img_size)
         self.D = self.D.to(device)
 
         # loss functions

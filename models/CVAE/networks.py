@@ -73,7 +73,7 @@ class IDBlock(nn.Module):
         return y
 
 class Encoder(nn.Module):
-    def __init__(self, in_channels, latent_size = 512,
+    def __init__(self, in_channels, img_size = 224, latent_size = 512,
                  norm = nn.BatchNorm2d,
                  padding_mode = 'reflect', activation = nn.ReLU(inplace=True)):
         super(Encoder, self).__init__()
@@ -107,8 +107,8 @@ class Encoder(nn.Module):
         )
 
         self.encoder = nn.Sequential(self.conv0, self.conv1, self.down1,self.down2,self.down3)
-        self.mu = nn.Linear(512*7*7, latent_size)
-        self.log = nn.Linear(512*7*7, latent_size)
+        self.mu = nn.Linear(512*((img_size/32)**2), latent_size)
+        self.log = nn.Linear(512*((img_size/32)**2), latent_size)
     def forward(self, x):
         # print("=========ENCODER FORWARD=========")
         # print("BEFORE DOWNSAMPLE", x.shape)
@@ -120,10 +120,10 @@ class Encoder(nn.Module):
         return [mu, log_var]
 
 class Decoder(nn.Module):
-    def __init__(self, in_channels=512, out_channels = 3, activation=nn.LeakyReLU(0.2, True)):
+    def __init__(self, in_channels=512, out_channels = 3, img_size = 224, activation=nn.LeakyReLU(0.2, True)):
         super(Decoder,self).__init__()
         upsample = nn.Upsample(scale_factor=2, mode='bilinear')
-        self.inputLayer = nn.Linear(in_channels, 512 * 7*7)
+        self.inputLayer = nn.Linear(in_channels, 512 *((img_size /32)**2))
         self.up1 = nn.Sequential(
             upsample,
             nn.Conv2d(in_channels= 512, out_channels = 256, kernel_size= 3, stride = 1, padding  = 1),
