@@ -34,7 +34,9 @@ class ILVR(ModelBase):
     def init(self, opt):
         if opt.verbose:
             print('Initializing DDPM for ILVR...')
-        
+
+        ModelBase.init(self, opt)
+
         self.opt = opt
 
         self.isTrain = opt.isTrain
@@ -91,12 +93,14 @@ class ILVR(ModelBase):
 
         shape = (opt.batchSize, 3, opt.image_size, opt.image_size)
 
+        noise = torch.randn_like(img_source, device=device)
         noised_source = diffusion.q_sample(img_source,
                                            t=torch.tensor([int(opt.timestep_respacing) - 1] * shape[0], device=device),
-                                           noise=torch.randn_like(img_source, device=device))
+                                           noise=noise)
 
         model_kwargs = {}
         model_kwargs['ref_img'] = img_target
+        model_kwargs['q_noise'] = noise
         sample = diffusion.p_sample_loop(
             model,
             shape,

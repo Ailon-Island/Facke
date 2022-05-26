@@ -533,6 +533,7 @@ class GaussianDiffusion:
 
         for i in indices:
             t = th.tensor([i] * shape[0], device=device)
+            q_noise = model_kwargs.pop('q_noise')
             with th.no_grad():
                 out = self.p_sample(
                     model,
@@ -547,8 +548,10 @@ class GaussianDiffusion:
                 #### ILVR ####
                 if resizers is not None:
                     if i > range_t:
+                        # out["sample"] = out["sample"] - up(down(out["sample"])) + up(
+                        #     down(self.q_sample(model_kwargs["ref_img"], t, th.randn(*shape, device=device))))
                         out["sample"] = out["sample"] - up(down(out["sample"])) + up(
-                            down(self.q_sample(model_kwargs["ref_img"], t, th.randn(*shape, device=device))))
+                            down(self.q_sample(model_kwargs["ref_img"], t, q_noise)))
 
                 yield out
                 img = out["sample"]
