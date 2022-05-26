@@ -108,7 +108,7 @@ class CVAE(ModelBase):
 
         Fake = self.INnorm(Fake)
 
-        loss_Rec = self.Recloss(Fake, img_source)
+        loss_Rec = self.Recloss(Fake, img_target)
         loss_KL = self.KLloss(mu, log_var)
 
         return [[loss_Rec, loss_KL], Fake]
