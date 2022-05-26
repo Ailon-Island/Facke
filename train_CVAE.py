@@ -251,6 +251,7 @@ def test(opt, model, loader, epoch_idx, total_iter, visualizer):
 
                 imgs = np.stack(imgs, axis=0).transpose(0, 2, 3, 1)
                 plot_batch(imgs, os.path.join(sample_path, 'step_' + str(total_iter) + '.jpg'))
+                del imgs
             model.module.isTrain = True
 
         # early stop
