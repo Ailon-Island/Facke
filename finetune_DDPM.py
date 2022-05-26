@@ -146,7 +146,7 @@ class Trainer:
                 if not os.path.exists(self.sample_path):
                     os.mkdir(self.sample_path)
 
-                self.model.module.G.eval()
+                self.model.eval()
                 with torch.no_grad():
                     img_source = img_source[:self.sample_size]
 

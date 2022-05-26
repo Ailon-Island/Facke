@@ -9,10 +9,12 @@ sys.path.append(root_path)
 import torch
 from torch import nn
 import torch.nn.functional as F
+from torchvision import transforms
 from utils import loss
 from utils.IDExtract import IDExtractor
 from . import networks
 from ..model_base import ModelBase
+
 
 class CVAE(ModelBase):
     def __init__(self):
@@ -25,7 +27,7 @@ class CVAE(ModelBase):
 
         self.isTrain = opt.isTrain
         self.gpu_ids = opt.gpu_ids
-
+        self.img_size = opt.image_size
         self.iter = 0
 
         if torch.cuda.is_available():
@@ -33,25 +35,28 @@ class CVAE(ModelBase):
         else:
             device = torch.device("cpu")
 
+
+        self.INnorm = transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))  # normalization of ImageNet
+
         #Merge 1
 
-        self.M1 = networks.Merge_Image(in_channels = 3)
+        self.M1 = networks.Merge_Image(in_channels = 3, img_size= self.img_size)
         self.M1 = self.M1.to(device)
         #Encoder
-        self.E = networks.Encoder(in_channels= 4)
+        self.E = networks.Encoder(in_channels= 4, img_size= self.img_size)
         self.E = self.E.to(device)
 
         #Encoder -> MERGE -> DECODER
-        self.M2 = networks.Merge_Distribution(in_channels=512)
+        self.M2 = networks.Merge_Distribution(in_channels=512,out_channels=512)
         self.M2 = self.M2.to(device)
     
         #Decoder
-        self.D = networks.Decoder()
+        self.D = networks.Decoder(img_size=self.img_size)
         self.D = self.D.to(device)
 
         # loss functions
         self.loss_names = ['Rec', 'KL']
-        self.Recloss = nn.MSELoss()
+        self.Recloss = nn.L1Loss()
         self.KLloss = loss.KLLoss(Weight= 0.000025)
 
         # optimizers
@@ -77,22 +82,23 @@ class CVAE(ModelBase):
 
         X = self.M1(img_source, img_target)
 
-        mu, log_var = self.E(X)
+        mu, log_var, X_ID = self.E(X)
         # print("=========In CVAE.forward=======")
         # print("MU",mu.shape)
+        # print("X_ID",X_ID.shape)
+        # Inject_mu, Inject_log_var = self.M2(mu,log_var, latent_ID_target)
 
-        Inject_mu, Inject_log_var = self.M2(mu,log_var, latent_ID_target)
 
-
-        z = self.reparameterize(Inject_mu, Inject_log_var)
+        # z = self.reparameterize(Inject_mu, Inject_log_var)
         # print("z", z.shape)
         # print("LAtent_ID_target", latent_ID_target.shape)
         # y = self.M2(z, latent_ID_target)
-        Fake = self.D(z)
+        # Fake = self.D(z)
+        Fake = self.D(X_ID)
         if not self.isTrain:
             return Fake
 
-        Fake = self.ID_extract.INnorm(Fake)
+        Fake = self.INnorm(Fake)
 
         loss_Rec = self.Recloss(Fake, img_source)
         loss_KL = self.KLloss(mu, log_var)
