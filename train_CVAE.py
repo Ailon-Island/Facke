@@ -121,11 +121,12 @@ class Trainer:
             if self.total_iter % opt.display_freq == display_delta:
                 if not os.path.exists(self.sample_path):
                     os.mkdir(self.sample_path)
-
+                '''
                 self.model.module.M1.eval()
                 self.model.module.E.eval()
                 self.model.module.M2.eval()
                 self.model.module.D.eval()
+                '''
                 self.model.module.eval()
                 self.model.module.isTrain = False
                 with torch.no_grad():
@@ -225,10 +226,12 @@ def test(opt, model, loader, epoch_idx, total_iter, visualizer):
 
             if not os.path.exists(sample_path):
                 os.mkdir(sample_path)
+            '''
             self.model.module.M1.eval()
             self.model.module.E.eval()
             self.model.module.M2.eval()
             self.model.module.D.eval()
+            '''
             self.model.module.eval()
             self.model.module.isTrain = False
             with torch.no_grad():
