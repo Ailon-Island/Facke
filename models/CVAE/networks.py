@@ -127,7 +127,8 @@ class Encoder(nn.Module):
         mu = self.mu(x)
         log_var = self.log_var(x)
         # print("MU:", mu.shape)
-        return [mu, log_var, x]
+        # return [mu, log_var, x]
+        return [mu, log_var]
 
 class Decoder(nn.Module):
     def __init__(self, in_channels=512, out_channels = 3, padding_mode='reflect', activation = nn.ReLU(inplace=True)):
