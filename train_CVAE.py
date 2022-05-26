@@ -66,7 +66,7 @@ class Trainer:
         print_delta     = self.total_iter % opt.print_freq
         save_delta      = self.total_iter % opt.save_latest_freq
 
-        for batch_idx, ((img_source, img_target), (latent_ID, _), _) in enumerate(self.loader, start=1):
+        for batch_idx, ((img_source, img_target), (latent_ID, _), is_same_ID) in enumerate(self.loader, start=1):
             self.model.train()
             if opt.debug:
                 print('Batch {}: model instance to be trained iter: {}.'.format(batch_idx, self.model.module.iter))
@@ -78,11 +78,14 @@ class Trainer:
                 img_source, img_target, latent_ID = img_source.to('cuda'), img_target.to('cuda'), latent_ID.to('cuda')
 
             # count iterations
-            batch_size              = img_source.shape[0]
+            batch_size              = len(is_same_ID)
             self.total_iter        += batch_size
             self.model.module.iter  = self.total_iter
             epoch_iter             += batch_size
 
+            if opt.ID_check:
+                print(is_same_ID)
+            is_same_ID = is_same_ID[0].detach().item()
 
             ########### FORWARD ###########
             [losses, _] = model(img_source, img_target, latent_ID)
@@ -191,12 +194,14 @@ def test(opt, model, loader, epoch_idx, total_iter, visualizer):
     print('Testing...')
     if opt.debug:
         print('Model instance being tested iter: {}.'.format(model.module.iter))
-    for batch_idx, ((img_source, img_target), (latent_ID, _), _) in enumerate(tqdm.tqdm(loader)):
-        batch_size = img_source.shape[0]
+    for batch_idx, ((img_source, img_target), (latent_ID, _), is_same_ID) in enumerate(tqdm.tqdm(loader)):
+        batch_size = len(is_same_ID)
         test_iter += batch_size
 
         if len(opt.gpu_ids):
             img_source, img_target, latent_ID = img_source.to('cuda'), img_target.to('cuda'), latent_ID.to('cuda')
+
+        is_same_ID = is_same_ID[0].detach().item()
 
         ########### FORWARD ###########
         [losses, _] = model(img_source, img_target, latent_ID)
@@ -210,8 +215,9 @@ def test(opt, model, loader, epoch_idx, total_iter, visualizer):
             test_losses = losses
         else:
             test_losses = [
-                test_loss + loss * batch_size
-                for test_loss, loss in zip(test_losses, losses)]
+                test_loss + loss * batch_size if is_same_ID or loss_name != 'rec' else
+                test_loss
+                for loss_name, test_loss, loss in zip(model.module.loss_names, test_losses, losses)]
 
         # display images
         if batch_idx == 0:
@@ -251,7 +257,6 @@ def test(opt, model, loader, epoch_idx, total_iter, visualizer):
 
                 imgs = np.stack(imgs, axis=0).transpose(0, 2, 3, 1)
                 plot_batch(imgs, os.path.join(sample_path, 'step_' + str(total_iter) + '.jpg'))
-                del imgs
             model.module.isTrain = True
 
         # early stop
