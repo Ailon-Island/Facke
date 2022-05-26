@@ -60,7 +60,7 @@ class CVAE(ModelBase):
         # loss functions
         self.loss_names = ['Rec', 'KL']
         self.Recloss = nn.L1Loss()
-        self.KLloss = loss.KLLoss(Weight= 0.000025)
+        self.KLloss = loss.KLLoss(Weight= 0.00025)
         
         # optimizers
         params = list(self.M1.parameters()) + list(self.E.parameters()) + list(self.M2.parameters()) + list(self.D.parameters())
