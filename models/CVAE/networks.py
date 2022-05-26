@@ -109,17 +109,17 @@ class Encoder(nn.Module):
         self.encoder = nn.Sequential(self.conv0, self.conv1, self.down1,self.down2,self.down3)
 
         self.mu = nn.Sequential(
-            nn.Conv2d(512,latent_size, kernel_size =1),
+            nn.Conv2d(512,latent_size, kernel_size =3,padding = 1),
             norm(num_features = 512),
             activation
         )
         self.log = nn.Sequential(
-            nn.Conv2d(512,latent_size, kernel_size =1),
+            nn.Conv2d(512,latent_size, kernel_size =3,padding =1),
             norm(num_features = 512),
             activation
         )
         self.ID = nn.Sequential(
-            nn.Conv2d(512,latent_size, kernel_size =1),
+            nn.Conv2d(512,latent_size, kernel_size =3,padding = 1),
             norm(num_features = 512),
             activation
         )
@@ -145,7 +145,7 @@ class Decoder(nn.Module):
         self.img_size = img_size
         # self.inputLayer = nn.Linear(in_channels, 512 *((img_size//32)**2))
         self.inputLayer = nn.Sequential(
-            nn.Conv2d(in_channels, 512, kernel_size = 1),
+            nn.Conv2d(in_channels, 512, kernel_size = 3, padding =1),
             nn.BatchNorm2d(512),
             activation
         )
