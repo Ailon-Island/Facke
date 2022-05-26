@@ -73,22 +73,21 @@ class IDBlock(nn.Module):
         return y
 
 class Encoder(nn.Module):
-    def __init__(self, in_channels, img_size = 224, latent_size = 512,
-                 norm = nn.BatchNorm2d,
-                 padding_mode = 'reflect', activation = nn.ReLU(inplace=True)):
+    def __init__(self, in_channels, out_channels,
+                 norm=nn.BatchNorm2d,
+                 padding_mode='reflect', activation = nn.ReLU(inplace=True)):
         super(Encoder, self).__init__()
 
-         # first convolution
-        self.conv0 = nn.Sequential(
-            nn.Conv2d(in_channels, out_channels=32, kernel_size=3, stride = 2, padding =1),
-            norm(num_features=32),
-            activation
-        )
+        # first convolution
         self.conv1 = nn.Sequential(
-            nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3, stride = 2, padding =1),
+            nn.ReflectionPad2d(padding=3) if padding_mode == 'reflect' else
+            nn.ReplicationPad2d(padding=3) if padding_mode == 'replicate' else
+            nn.ZeroPad2d(padding=3), # padding_mode == 'zero'
+            nn.Conv2d(in_channels, out_channels=64, kernel_size=7),
             norm(num_features=64),
             activation
         )
+
         # downsampling
         self.down1 = nn.Sequential(
             nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3, stride=2, padding=1),
@@ -106,89 +105,71 @@ class Encoder(nn.Module):
             activation
         )
 
-        self.encoder = nn.Sequential(self.conv0, self.conv1, self.down1,self.down2,self.down3)
-
         self.mu = nn.Sequential(
-            nn.Conv2d(512,latent_size, kernel_size =3,padding = 1),
-            norm(num_features = 512),
+            nn.Conv2d(in_channels=512,out_channels=512, kernel_size = 3, stride = 1, padding =1),
+            norm(512),
             activation
         )
-        self.log = nn.Sequential(
-            nn.Conv2d(512,latent_size, kernel_size =3,padding =1),
-            norm(num_features = 512),
+        self.log_var = nn.Sequential(
+            nn.Conv2d(in_channels=512,out_channels=512, kernel_size = 3, stride = 1, padding =1),
+            norm(512),
             activation
         )
-        self.ID = nn.Sequential(
-            nn.Conv2d(512,latent_size, kernel_size =3,padding = 1),
-            norm(num_features = 512),
-            activation
-        )
-        # self.mu = nn.Linear(512*((img_size//32)**2), latent_size)
-        # self.log = nn.Linear(512*((img_size//32)**2), latent_size)
-        # self.ID = nn.Linear(512*((img_size//32)**2), latent_size)
     def forward(self, x):
         # print("=========ENCODER FORWARD=========")
         # print("BEFORE DOWNSAMPLE", x.shape)
-        x = self.encoder(x)
+        x = self.conv1(x)
+        x = self.down1(x)
+        x = self.down2(x)
+        x = self.down3(x)
         # x = torch.flatten(x,start_dim = 1)
         # print("AFTER DOWNSAMPLE", x.shape)
         mu = self.mu(x)
-        log_var = self.log(x)
-        ID = self.ID(x)
+        log_var = self.log_var(x)
         # print("MU:", mu.shape)
-        return [mu, log_var,ID]
+        return [mu, log_var, x]
 
 class Decoder(nn.Module):
-    def __init__(self, in_channels=512, out_channels = 3, img_size = 224, activation=nn.LeakyReLU(0.2, True)):
+    def __init__(self, in_channels=512, out_channels = 3, padding_mode='reflect', activation = nn.ReLU(inplace=True)):
         super(Decoder,self).__init__()
         upsample = nn.Upsample(scale_factor=2, mode='bilinear')
-        self.img_size = img_size
-        # self.inputLayer = nn.Linear(in_channels, 512 *((img_size//32)**2))
-        self.inputLayer = nn.Sequential(
-            nn.Conv2d(in_channels, 512, kernel_size = 3, padding =1),
-            nn.BatchNorm2d(512),
-            activation
-        )
+        # upsampling
         self.up1 = nn.Sequential(
             upsample,
-            nn.Conv2d(in_channels= 512, out_channels = 256, kernel_size= 3, stride = 1, padding  = 1),
+            nn.Conv2d(512, 256, kernel_size=3, stride=1, padding=1),
             nn.BatchNorm2d(256),
             activation
         )
         self.up2 = nn.Sequential(
             upsample,
-            nn.Conv2d(in_channels= 256, out_channels = 128, kernel_size= 3, stride = 1, padding  = 1),
+            nn.Conv2d(256, 128, kernel_size=3, stride=1, padding=1),
             nn.BatchNorm2d(128),
             activation
         )
         self.up3 = nn.Sequential(
             upsample,
-            nn.Conv2d(in_channels= 128, out_channels = 64, kernel_size = 3, stride = 1, padding = 1),
+            nn.Conv2d(128, 64, kernel_size=3, stride=1, padding=1),
             nn.BatchNorm2d(64),
             activation
         )
-        # self.UpScale = nn.Upsample(scale_factor=14, mode='bilinear')
-        self.up4 = nn.Sequential(
-            upsample,
-            nn.Conv2d(in_channels = 64, out_channels = 32, kernel_size = 3, stride = 1, padding = 1),
-            nn.BatchNorm2d(32),
-            activation
-        )
-        self.decode = nn.Sequential(self.up1, self.up2, self.up3, self.up4)
 
+        # last convolution
         self.conv2 = nn.Sequential(
-            nn.ReflectionPad2d(padding=1),
-            nn.Upsample(scale_factor=2, mode='bilinear'),
-            nn.Conv2d(32, out_channels, kernel_size=7,padding =1),
-            nn.BatchNorm2d(num_features=out_channels),
-            nn.Conv2d(out_channels,out_channels,kernel_size = 1),
+            nn.ReflectionPad2d(padding=3) if padding_mode == 'reflect' else
+            nn.ReplicationPad2d(padding=3) if padding_mode == 'replicate' else
+            nn.ZeroPad2d(padding=3),  # padding_mode == 'zero'
+            nn.Conv2d(64, out_channels, kernel_size=7),
             nn.BatchNorm2d(num_features=out_channels),
             nn.Tanh()
         )
     def forward(self, x):
         # print("=========IN Decoder========")
         # print("ORIGIN ",x.shape)
-        x = self.inputLayer(x)
+        x = self.up1(x)
+        x = self.up2(x)
+        x = self.up3(x)
+        x = x.conv2(x)
+        return (x+1)/2
         # print("AFTER inputLayer", x.shape)
         # x = x.view(-1,512,(self.img_size//32),(self.img_size//32))
         # x = self.up1(x)
@@ -198,40 +179,45 @@ class Decoder(nn.Module):
         # x = self.up3(x)
         # print("AFTER up3",x.shape)
         # x = self.up4(x)
-        x = self.decode(x)
+        # x = self.decode(x)
         # print("AFTER up4", x.shape)
-        x = self.conv2(x)
+        # x = self.conv2(x)
         # print("AFTER outputLayer", x.shape)
         # print("===== FINISH Decode======")
-        return (x+1)/2
+        # return (x+1)/2
 
 class Merge_Image(nn.Module):
-    def __init__(self, in_channels, img_size=224):
+    def __init__(self, in_channels, activation = nn.ReLU(inplace=True)):
         super(Merge_Image, self).__init__()
-        self.img_size = img_size
-        self.conv = nn.Conv2d(in_channels, in_channels, kernel_size=1)
-        self.emb = nn.Conv2d(in_channels, 1, kernel_size=1)
+        self.emb = nn.Sequential(
+            nn.Conv2d(in_channels, 1, kernel_size=3, stride =1 ,padding =1),
+            nn.BatchNorm2d(1),
+            activation
+        )
+
+
     def forward(self, Img_Source, Img_Target):
         # print(Img_Source.shape, Img_Target.shape)
-
-        X = self.conv(Img_Source)
 
         y = self.emb(Img_Target)
         # print(X.shape,y.shape)
         # y = y.view(-1, self.img_size, self.img_size).unsqueeze(1)
-        X = torch.cat([X, y], dim = 1)
+        X = torch.cat([Img_Source, y], dim = 1)
         return X
 
 class Merge_Distribution(nn.Module): # Sample_X + Y_ID -> ADIN_LATENT -> 512 ?
-    def __init__(self, in_channels,out_channels):
-        super(Merge_Distribution,self).__init__()
-        self.mu = nn.Conv2d(in_channels,out_channels,kernel_size =1)
-        self.log_var = nn.Conv2d(in_channels,out_channels, kernel_size =1)
+    def __init__(self, latent_size, num_ID_blocks = 9, norm=nn.BatchNorm2d,
+                 padding_mode='reflect', activation = nn.ReLU(inplace=True)):
+        super(Merge_Distribution, self).__init__()
+        ID_blocks = []
+        for i in range(num_ID_blocks):
+            ID_blocks += [IDBlock(512, latent_size, padding_mode, activation)]
+        self.ID_blocks = nn.Sequential(*ID_blocks)
 
-    def forward(self, mu,log_var, latent_id):
-        ID_mu = self.mu(x)
-        ID_log_var = self.log_var(x)
-        return mu - ID_mu, log_var-ID_log_var
+    def forward(self, x, latent_id):
+        for ID_block in self.ID_blocks:
+            x = ID_block(x, latent_id)
+        return x
 
 
 class Generator(nn.Module):
@@ -264,6 +250,17 @@ class Generator(nn.Module):
         self.down3 = nn.Sequential(
             nn.Conv2d(in_channels=256, out_channels=512, kernel_size=3, stride=2, padding=1),
             norm(num_features=512),
+            activation
+        )
+
+        self.mu = nn.Sequential(
+            nn.Conv2d(in_channels=512,out_channels=512, kernel_size = 3, stride = 1, padding =1),
+            norm(512),
+            activation
+        )
+        self.log_var = nn.Sequential(
+            nn.Conv2d(in_channels=512,out_channels=512, kernel_size = 3, stride = 1, padding =1),
+            norm(512),
             activation
         )
 
