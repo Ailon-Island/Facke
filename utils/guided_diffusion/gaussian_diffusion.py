@@ -533,7 +533,7 @@ class GaussianDiffusion:
 
         for i in indices:
             t = th.tensor([i] * shape[0], device=device)
-            q_noise = model_kwargs.pop('q_noise')
+            q_noise = model_kwargs.pop('q_noise', None)
             with th.no_grad():
                 out = self.p_sample(
                     model,
