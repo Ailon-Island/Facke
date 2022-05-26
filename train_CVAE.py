@@ -232,8 +232,8 @@ def test(opt, model, loader, epoch_idx, total_iter, visualizer):
             self.model.module.M2.eval()
             self.model.module.D.eval()
             '''
-            self.model.module.eval()
-            self.model.module.isTrain = False
+            model.module.eval()
+            model.module.isTrain = False
             with torch.no_grad():
                 img_source = img_source[:sample_size]
                 latent_ID = latent_ID[:sample_size]
@@ -257,7 +257,7 @@ def test(opt, model, loader, epoch_idx, total_iter, visualizer):
 
                 imgs = np.stack(imgs, axis=0).transpose(0, 2, 3, 1)
                 plot_batch(imgs, os.path.join(sample_path, 'step_' + str(total_iter) + '.jpg'))
-            self.model.module.isTrain = True
+            model.module.isTrain = True
 
         # early stop
         if test_iter >= opt.max_dataset_size:
