@@ -40,7 +40,7 @@ class CVAE(ModelBase):
         
         #Merge 1
 
-        self.M1 = networks.Merge_Image(in_channels=3)
+        self.M1 = networks.Merge_Image(in_channels=512, img_size = self.img_size)
         self.M1 = self.M1.to(device)
         #Encoder
         self.E = networks.Encoder(in_channels= 4, out_channels = 512)
@@ -84,9 +84,9 @@ class CVAE(ModelBase):
         eps = torch.rand_like(std)
         return eps* std + mu
 
-    def forward(self, img_source, img_target, latent_ID):
+    def forward(self, Img, latent_ID):
         
-        X = self.M1(img_source, img_target)
+        X = self.M1(Img, latent_ID)
 
         # mu, log_var, X_ID = self.E(X)
         mu, log_var = self.E(X)
@@ -102,14 +102,14 @@ class CVAE(ModelBase):
         # print("z", z.shape)
         # print("LAtent_ID_target", latent_ID_target.shape)
         # y = self.M2(z, latent_ID_target)
-        Fake = self.D(z)
+        Fake = self.D(Inject_z)
         # Fake = self.D(X_ID)
         if not self.isTrain:
             return Fake
 
         Fake = self.INnorm(Fake)
 
-        loss_Rec = self.Recloss(Fake, img_target)
+        loss_Rec = self.Recloss(Fake, Img)
         loss_KL = self.KLloss(mu, log_var)
 
         return [[loss_Rec, loss_KL], Fake]
@@ -121,6 +121,7 @@ class CVAE(ModelBase):
         # loss_Rec = self.Recloss(img_fake, img_target)
         # loss_KL = loss_Rec * 0
         # return [[loss_Rec, loss_KL], img_fake]
+
 
 
     def save(self, epoch_label):

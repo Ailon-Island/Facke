@@ -188,22 +188,22 @@ class Decoder(nn.Module):
         # return (x+1)/2
 
 class Merge_Image(nn.Module):
-    def __init__(self, in_channels, activation = nn.ReLU(inplace=True)):
+    def __init__(self, in_channels,img_size, activation = nn.ReLU(inplace=True)):
         super(Merge_Image, self).__init__()
+        self.img_size = img_size
         self.emb = nn.Sequential(
-            nn.Conv2d(in_channels, 1, kernel_size=3, stride =1 ,padding =1),
-            nn.BatchNorm2d(1),
+            nn.Linear(in_channels,img_size * img_size),
+            nn.BatchNorm1d(img_size* img_size),
             activation
         )
 
 
-    def forward(self, Img_Source, Img_Target):
+    def forward(self, Img, latent_id):
         # print(Img_Source.shape, Img_Target.shape)
-
-        y = self.emb(Img_Source)
-        # print(X.shape,y.shape)
+        y = self.emb(latent_id)
+        y  = y.view(-1, 1,self.img_size, self.img_size)
         # y = y.view(-1, self.img_size, self.img_size).unsqueeze(1)
-        X = torch.cat([Img_Target, y], dim = 1)
+        X = torch.cat([Img, y], dim = 1)
         return X
 
 class Merge_Distribution(nn.Module): # Sample_X + Y_ID -> ADIN_LATENT -> 512 ?

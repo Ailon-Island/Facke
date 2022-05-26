@@ -85,7 +85,7 @@ class Trainer:
 
 
             ########### FORWARD ###########
-            [losses, _] = model(img_source, img_source, latent_ID)
+            [losses, _] = model(img_source, latent_ID)
 
             ############ LOSSES ############
             # gather losses
@@ -142,7 +142,7 @@ class Trainer:
                         imgs.append(save_img[i, ...])
 
                         image_infer = img_source[i, ...].repeat(self.sample_size, 1, 1, 1)
-                        img_fake = model.module( img_source, image_infer, latent_ID).cpu().numpy()
+                        img_fake = model.module(image_infer, latent_ID).cpu().numpy()
 
                         for j in range(self.sample_size):
                             imgs.append(img_fake[j, ...])
@@ -199,7 +199,7 @@ def test(opt, model, loader, epoch_idx, total_iter, visualizer):
             img_source, latent_ID = img_source.to('cuda'), latent_ID.to('cuda')
 
         ########### FORWARD ###########
-        [losses, _] = model(img_source, img_source, latent_ID)
+        [losses, _] = model(img_source, latent_ID)
         
         # gather losses
         losses = [torch.mean(x) if not isinstance(x, int) else x for x in losses]
@@ -244,7 +244,7 @@ def test(opt, model, loader, epoch_idx, total_iter, visualizer):
                     imgs.append(save_img[i, ...])
 
                     image_infer = img_source[i, ...].repeat(sample_size, 1, 1, 1)
-                    img_fake = model.module( img_source, image_infer, latent_ID).cpu().numpy()
+                    img_fake = model.module(image_infer, latent_ID).cpu().numpy()
 
                     for j in range(sample_size):
                         imgs.append(img_fake[j, ...])
