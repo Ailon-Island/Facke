@@ -115,7 +115,7 @@ class CVAE(ModelBase):
         if not self.isTrain:
             return img_fake
         img_fake = self.INnorm(img_fake)
-        loss_Rec = self.Recloss(img_fake, img_source)
+        loss_Rec = self.Recloss(img_fake, img_target)
         loss_KL = loss_Rec * 0
         return [[loss_Rec, loss_KL], img_fake]
 
