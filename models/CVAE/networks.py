@@ -168,7 +168,7 @@ class Decoder(nn.Module):
         x = self.up1(x)
         x = self.up2(x)
         x = self.up3(x)
-        x = x.conv2(x)
+        x = self.conv2(x)
         return (x+1)/2
         # print("AFTER inputLayer", x.shape)
         # x = x.view(-1,512,(self.img_size//32),(self.img_size//32))

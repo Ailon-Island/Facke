@@ -98,7 +98,7 @@ class CVAE(ModelBase):
 
 
         # z = self.reparameterize(Inject_mu, Inject_log_var)
-        print("z", z.shape)
+        # print("z", z.shape)
         # print("LAtent_ID_target", latent_ID_target.shape)
         # y = self.M2(z, latent_ID_target)
         Fake = self.D(z)
