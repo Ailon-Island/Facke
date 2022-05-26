@@ -84,7 +84,7 @@ class CVAE(ModelBase):
         eps = torch.rand_like(std)
         return eps* std + mu
 
-    def forward(self, img_source, img_target, latent_ID, latent_ID_target):
+    def forward(self, img_source, img_target, latent_ID):
         
         X = self.M1(img_source, img_target)
 

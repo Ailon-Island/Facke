@@ -199,10 +199,10 @@ class Merge_Image(nn.Module):
     def forward(self, Img_Source, Img_Target):
         # print(Img_Source.shape, Img_Target.shape)
 
-        y = self.emb(Img_Target)
+        y = self.emb(Img_Source)
         # print(X.shape,y.shape)
         # y = y.view(-1, self.img_size, self.img_size).unsqueeze(1)
-        X = torch.cat([Img_Source, y], dim = 1)
+        X = torch.cat([Img_Target, y], dim = 1)
         return X
 
 class Merge_Distribution(nn.Module): # Sample_X + Y_ID -> ADIN_LATENT -> 512 ?
