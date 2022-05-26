@@ -233,3 +233,95 @@ class Merge_Distribution(nn.Module): # Sample_X + Y_ID -> ADIN_LATENT -> 512 ?
         ID_log_var = self.log_var(x)
         return mu - ID_mu, log_var-ID_log_var
 
+
+class Generator(nn.Module):
+    def __init__(self, in_channels, out_channels, latent_size, num_ID_blocks=9,
+                 norm=nn.BatchNorm2d,
+                 padding_mode='reflect', activation = nn.ReLU(inplace=True)):
+        super(Generator, self).__init__()
+
+        # first convolution
+        self.conv1 = nn.Sequential(
+            nn.ReflectionPad2d(padding=3) if padding_mode == 'reflect' else
+            nn.ReplicationPad2d(padding=3) if padding_mode == 'replicate' else
+            nn.ZeroPad2d(padding=3), # padding_mode == 'zero'
+            nn.Conv2d(in_channels, out_channels=64, kernel_size=7),
+            norm(num_features=64),
+            activation
+        )
+
+        # downsampling
+        self.down1 = nn.Sequential(
+            nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3, stride=2, padding=1),
+            norm(num_features=128),
+            activation
+        )
+        self.down2 = nn.Sequential(
+            nn.Conv2d(in_channels=128, out_channels=256, kernel_size=3, stride=2, padding=1),
+            norm(num_features=256),
+            activation
+        )
+        self.down3 = nn.Sequential(
+            nn.Conv2d(in_channels=256, out_channels=512, kernel_size=3, stride=2, padding=1),
+            norm(num_features=512),
+            activation
+        )
+
+        # ID-blocks
+        ID_blocks = []
+        for i in range(num_ID_blocks):
+            ID_blocks += [IDBlock(512, latent_size, padding_mode, activation)]
+        self.ID_blocks = nn.Sequential(*ID_blocks)
+
+        upsample = nn.Upsample(scale_factor=2, mode='bilinear')
+        # upsampling
+        self.up1 = nn.Sequential(
+            upsample,
+            nn.Conv2d(512, 256, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(256),
+            activation
+        )
+        self.up2 = nn.Sequential(
+            upsample,
+            nn.Conv2d(256, 128, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(128),
+            activation
+        )
+        self.up3 = nn.Sequential(
+            upsample,
+            nn.Conv2d(128, 64, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(64),
+            activation
+        )
+
+        # last convolution
+        self.conv2 = nn.Sequential(
+            nn.ReflectionPad2d(padding=3) if padding_mode == 'reflect' else
+            nn.ReplicationPad2d(padding=3) if padding_mode == 'replicate' else
+            nn.ZeroPad2d(padding=3),  # padding_mode == 'zero'
+            nn.Conv2d(64, out_channels, kernel_size=7),
+            norm(num_features=out_channels),
+            nn.Tanh()
+        )
+
+
+    def forward(self, x, latent_id):
+        x = self.conv1(x)
+
+        x = self.down1(x)
+        x = self.down2(x)
+        x = self.down3(x)
+
+        for ID_block in self.ID_blocks:
+            x = ID_block(x, latent_id)
+
+        x = self.up1(x)
+        x = self.up2(x)
+        x = self.up3(x)
+
+        x = self.conv2(x)
+
+        x = (x + 1) / 2
+
+        return x
+

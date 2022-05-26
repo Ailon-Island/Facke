@@ -51,7 +51,6 @@ if __name__ == '__main__':
         device = 'cuda'
     else:
         device = 'cpu'
-    logger.configure(dir=opt.output_path)
 
     # logger.log("loading data...")
     # # data = load_reference(
@@ -61,9 +60,9 @@ if __name__ == '__main__':
     # #     class_cond=args.class_cond,
     # # )
 
-    logger.log("Initiating model...")
+    print("Initiating model...")
     model = create_model(opt)
-    logger.log("Model initiated.")
+    print("Model initiated.")
 
     transform = transforms.Compose([
         transforms.ToTensor(),
@@ -72,14 +71,15 @@ if __name__ == '__main__':
     ])
     detransform = DeTransform()
 
-    logger.log("Generating data loaders...")
+    print("Generating data loaders...")
     test_data = VGGFace2HQDataset(opt, isTrain=False, transform=transform, is_same_ID=True, auto_same_ID=True)
     test_loader = DataLoader(dataset=test_data, batch_size=opt.batchSize, shuffle=True, num_workers=opt.nThreads,
                              worker_init_fn=test_data.set_worker)
-    logger.log("Dataloaders ready.")
+    print("Dataloaders ready.")
 
-    logger.log("creating samples...")
+    print("creating samples...")
     count = 0
+    model.eval()
     for (img_source, _), _, is_same_ID in tqdm.tqdm(test_loader):
         if count >= opt.ntest:
             break
@@ -122,6 +122,6 @@ if __name__ == '__main__':
             plot_batch(imgs, os.path.join(sample_path, 'sample_' + str(count) + '.jpg'))
 
 
-        logger.log(f"created {count} samples")
-    logger.log("sampling complete")
+        print(f"created {count} samples")
+    print("sampling complete")
 
