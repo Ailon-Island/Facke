@@ -66,7 +66,7 @@ class Trainer:
         print_delta     = self.total_iter % opt.print_freq
         save_delta      = self.total_iter % opt.save_latest_freq
 
-        for batch_idx, ((img_source, img_target), (latent_ID, latent_ID_target), is_same_ID) in enumerate(self.loader, start=1):
+        for batch_idx, ((img_source, img_target), (latent_ID, _), is_same_ID) in enumerate(self.loader, start=1):
             self.model.train()
             if opt.debug:
                 print('Batch {}: model instance to be trained iter: {}.'.format(batch_idx, self.model.module.iter))
@@ -75,7 +75,7 @@ class Trainer:
                 iter_start_time = time.time()
 
             if len(opt.gpu_ids):
-                img_source, img_target, latent_ID, latent_ID_target = img_source.to('cuda'), img_target.to('cuda'), latent_ID.to('cuda'), latent_ID_target.to('cuda')
+                img_source, img_target, latent_ID = img_source.to('cuda'), img_target.to('cuda'), latent_ID.to('cuda')
 
             # count iterations
             batch_size              = len(is_same_ID)
@@ -88,7 +88,7 @@ class Trainer:
             is_same_ID = is_same_ID[0].detach().item()
 
             ########### FORWARD ###########
-            [losses, _] = model(img_source, img_target, latent_ID, latent_ID_target)
+            [losses, _] = model(img_source, img_target, latent_ID)
 
             ############ LOSSES ############
             # gather losses
@@ -194,17 +194,17 @@ def test(opt, model, loader, epoch_idx, total_iter, visualizer):
     print('Testing...')
     if opt.debug:
         print('Model instance being tested iter: {}.'.format(model.module.iter))
-    for batch_idx, ((img_source, img_target), (latent_ID, latent_ID_target), is_same_ID) in enumerate(tqdm.tqdm(loader)):
+    for batch_idx, ((img_source, img_target), (latent_ID, _), is_same_ID) in enumerate(tqdm.tqdm(loader)):
         batch_size = len(is_same_ID)
         test_iter += batch_size
 
         if len(opt.gpu_ids):
-            img_source, img_target, latent_ID, latent_ID_target = img_source.to('cuda'), img_target.to('cuda'), latent_ID.to('cuda'), latent_ID_target.to('cuda')
+            img_source, img_target, latent_ID = img_source.to('cuda'), img_target.to('cuda'), latent_ID.to('cuda')
 
         is_same_ID = is_same_ID[0].detach().item()
 
         ########### FORWARD ###########
-        [losses, _] = model(img_source, img_target, latent_ID, latent_ID_target)
+        [losses, _] = model(img_source, img_target, latent_ID)
         
         # gather losses
         losses = [torch.mean(x) if not isinstance(x, int) else x for x in losses]
