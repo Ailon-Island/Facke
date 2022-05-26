@@ -107,24 +107,48 @@ class Encoder(nn.Module):
         )
 
         self.encoder = nn.Sequential(self.conv0, self.conv1, self.down1,self.down2,self.down3)
-        self.mu = nn.Linear(512*((img_size//32)**2), latent_size)
-        self.log = nn.Linear(512*((img_size//32)**2), latent_size)
+
+        self.mu = nn.Sequential(
+            nn.Conv2d(512,latent_size, kernel_size =1),
+            norm(num_features = 512),
+            activation
+        )
+        self.log = nn.Sequential(
+            nn.Conv2d(512,latent_size, kernel_size =1),
+            norm(num_features = 512),
+            activation
+        )
+        self.ID = nn.Sequential(
+            nn.Conv2d(512,latent_size, kernel_size =1),
+            norm(num_features = 512),
+            activation
+        )
+        # self.mu = nn.Linear(512*((img_size//32)**2), latent_size)
+        # self.log = nn.Linear(512*((img_size//32)**2), latent_size)
+        # self.ID = nn.Linear(512*((img_size//32)**2), latent_size)
     def forward(self, x):
         # print("=========ENCODER FORWARD=========")
         # print("BEFORE DOWNSAMPLE", x.shape)
         x = self.encoder(x)
-        x = torch.flatten(x,start_dim = 1)
-        # print("AFTER DOWNSAMPLE AND Flatten", x.shape)
+        # x = torch.flatten(x,start_dim = 1)
+        # print("AFTER DOWNSAMPLE", x.shape)
         mu = self.mu(x)
         log_var = self.log(x)
-        return [mu, log_var]
+        ID = self.ID(x)
+        # print("MU:", mu.shape)
+        return [mu, log_var,ID]
 
 class Decoder(nn.Module):
     def __init__(self, in_channels=512, out_channels = 3, img_size = 224, activation=nn.LeakyReLU(0.2, True)):
         super(Decoder,self).__init__()
         upsample = nn.Upsample(scale_factor=2, mode='bilinear')
         self.img_size = img_size
-        self.inputLayer = nn.Linear(in_channels, 512 *((img_size//32)**2))
+        # self.inputLayer = nn.Linear(in_channels, 512 *((img_size//32)**2))
+        self.inputLayer = nn.Sequential(
+            nn.Conv2d(in_channels, 512, kernel_size = 1),
+            nn.BatchNorm2d(512),
+            activation
+        )
         self.up1 = nn.Sequential(
             upsample,
             nn.Conv2d(in_channels= 512, out_channels = 256, kernel_size= 3, stride = 1, padding  = 1),
@@ -153,8 +177,11 @@ class Decoder(nn.Module):
         self.decode = nn.Sequential(self.up1, self.up2, self.up3, self.up4)
 
         self.conv2 = nn.Sequential(
+            nn.ReflectionPad2d(padding=1),
             nn.Upsample(scale_factor=2, mode='bilinear'),
-            nn.Conv2d(32, out_channels, kernel_size=3, padding= 1),
+            nn.Conv2d(32, out_channels, kernel_size=7,padding =1),
+            nn.BatchNorm2d(num_features=out_channels),
+            nn.Conv2d(out_channels,out_channels,kernel_size = 1),
             nn.BatchNorm2d(num_features=out_channels),
             nn.Tanh()
         )
@@ -163,7 +190,7 @@ class Decoder(nn.Module):
         # print("ORIGIN ",x.shape)
         x = self.inputLayer(x)
         # print("AFTER inputLayer", x.shape)
-        x = x.view(-1,512,(self.img_size//32),(self.img_size//32))
+        # x = x.view(-1,512,(self.img_size//32),(self.img_size//32))
         # x = self.up1(x)
         # print("AFTER up1", x.shape)
         # x = self.up2(x)
@@ -173,8 +200,6 @@ class Decoder(nn.Module):
         # x = self.up4(x)
         x = self.decode(x)
         # print("AFTER up4", x.shape)
-        # x = self.UpScale(x)
-        # print("AFTER upScale", x.shape)
         x = self.conv2(x)
         # print("AFTER outputLayer", x.shape)
         # print("===== FINISH Decode======")
@@ -198,13 +223,13 @@ class Merge_Image(nn.Module):
         return X
 
 class Merge_Distribution(nn.Module): # Sample_X + Y_ID -> ADIN_LATENT -> 512 ?
-    def __init__(self, in_channels):
+    def __init__(self, in_channels,out_channels):
         super(Merge_Distribution,self).__init__()
-        self.mu = nn.Linear(in_channels,in_channels)
-        self.log_var = nn.Linear(in_channels,in_channels)
+        self.mu = nn.Conv2d(in_channels,out_channels,kernel_size =1)
+        self.log_var = nn.Conv2d(in_channels,out_channels, kernel_size =1)
 
     def forward(self, mu,log_var, latent_id):
-        ID_mu = self.mu(latent_id)
-        ID_log_var = self.log_var(latent_id)
+        ID_mu = self.mu(x)
+        ID_log_var = self.log_var(x)
         return mu - ID_mu, log_var-ID_log_var
 

@@ -47,7 +47,7 @@ class CVAE(ModelBase):
         self.E = self.E.to(device)
 
         #Encoder -> MERGE -> DECODER
-        self.M2 = networks.Merge_Distribution(in_channels=512)
+        self.M2 = networks.Merge_Distribution(in_channels=512,out_channels=512)
         self.M2 = self.M2.to(device)
     
         #Decoder
@@ -56,7 +56,7 @@ class CVAE(ModelBase):
 
         # loss functions
         self.loss_names = ['Rec', 'KL']
-        self.Recloss = nn.MSELoss()
+        self.Recloss = nn.L1Loss()
         self.KLloss = loss.KLLoss(Weight= 0.000025)
 
         # optimizers
@@ -82,18 +82,19 @@ class CVAE(ModelBase):
 
         X = self.M1(img_source, img_target)
 
-        mu, log_var = self.E(X)
+        mu, log_var, X_ID = self.E(X)
         # print("=========In CVAE.forward=======")
         # print("MU",mu.shape)
+        # print("X_ID",X_ID.shape)
+        # Inject_mu, Inject_log_var = self.M2(mu,log_var, latent_ID_target)
 
-        Inject_mu, Inject_log_var = self.M2(mu,log_var, latent_ID_target)
 
-
-        z = self.reparameterize(Inject_mu, Inject_log_var)
+        # z = self.reparameterize(Inject_mu, Inject_log_var)
         # print("z", z.shape)
         # print("LAtent_ID_target", latent_ID_target.shape)
         # y = self.M2(z, latent_ID_target)
-        Fake = self.D(z)
+        # Fake = self.D(z)
+        Fake = self.D(X_ID)
         if not self.isTrain:
             return Fake
 
