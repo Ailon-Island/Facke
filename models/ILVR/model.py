@@ -65,23 +65,23 @@ class ILVR(ModelBase):
         up = Resizer(shape_d, opt.down_N).to(next(self.model.parameters()).device)
         self.resizers = (down, up)
 
-        self.schedule_sampler = create_named_schedule_sampler(opt.schedule_sampler, diffusion)
 
-        params = list(self.model.parameters())
+        if opt.isTrain:
+            self.schedule_sampler = create_named_schedule_sampler(opt.schedule_sampler, diffusion)
+            self.weight_decay = opt.weight_decay
+            self.ema_rate = (
+                [opt.ema_rate]
+                if isinstance(opt.ema_rate, float)
+                else [float(x) for x in opt.ema_rate.split(",")]
+            )
+            params = list(self.model.parameters())
+            self.ema_params = [
+                copy.deepcopy(params)
+                for _ in range(len(self.ema_rate))
+            ]
+            self.lr = opt.lr
+            self.optim = AdamW(params, lr=self.lr, weight_decay=self.weight_decay)
 
-        self.lr = opt.lr
-        self.weight_decay = opt.weight_decay
-        self.optim = AdamW(params, lr=self.lr, weight_decay=self.weight_decay)
-
-        self.ema_rate = (
-            [opt.ema_rate]
-            if isinstance(opt.ema_rate, float)
-            else [float(x) for x in opt.ema_rate.split(",")]
-        )
-        self.ema_params = [
-            copy.deepcopy(params)
-            for _ in range(len(self.ema_rate))
-        ]
 
 
     def swap(self, img_source, img_target):

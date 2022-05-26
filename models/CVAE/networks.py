@@ -235,7 +235,7 @@ class Merge_Distribution(nn.Module): # Sample_X + Y_ID -> ADIN_LATENT -> 512 ?
 
 
 class Generator(nn.Module):
-    def __init__(self, in_channels, out_channels, latent_size, num_ID_blocks=9,
+    def __init__(self, in_channels, out_channels, latent_size, num_ID_blocks=1,
                  norm=nn.BatchNorm2d,
                  padding_mode='reflect', activation = nn.ReLU(inplace=True)):
         super(Generator, self).__init__()

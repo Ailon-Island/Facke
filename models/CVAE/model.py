@@ -37,7 +37,7 @@ class CVAE(ModelBase):
 
 
         self.INnorm = transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))  # normalization of ImageNet
-
+        '''
         #Merge 1
 
         self.M1 = networks.Merge_Image(in_channels = 3, img_size= self.img_size)
@@ -53,14 +53,20 @@ class CVAE(ModelBase):
         #Decoder
         self.D = networks.Decoder(img_size=self.img_size)
         self.D = self.D.to(device)
+        '''
+        self.G = networks.Generator(in_channels=3,out_channels=3,latent_size=512,num_ID_blocks = 0)
+        self.G = self.G.to(device)
 
         # loss functions
         self.loss_names = ['Rec', 'KL']
         self.Recloss = nn.L1Loss()
         self.KLloss = loss.KLLoss(Weight= 0.000025)
-
+        '''
         # optimizers
         params = list(self.M1.parameters()) + list(self.E.parameters()) + list(self.M2.parameters()) + list(self.D.parameters())
+        self.optim = torch.optim.Adam(params, lr = opt.lr, betas=(opt.beta1, 0.999))
+        '''
+        params = list(self.G.parameters())
         self.optim = torch.optim.Adam(params, lr = opt.lr, betas=(opt.beta1, 0.999))
 
         self.old_lr = opt.lr
@@ -79,7 +85,7 @@ class CVAE(ModelBase):
         return eps* std + mu
 
     def forward(self, img_source, img_target, latent_ID, latent_ID_target):
-
+        '''
         X = self.M1(img_source, img_target)
 
         mu, log_var, X_ID = self.E(X)
@@ -104,13 +110,24 @@ class CVAE(ModelBase):
         loss_KL = self.KLloss(mu, log_var)
 
         return [[loss_Rec, loss_KL], Fake]
+        '''
+        img_fake = self.G(img_target,latent_ID)
+        if not self.isTrain:
+            return img_fake
+        img_fake = self.INnorm(img_fake)
+        loss_Rec = self.Recloss(img_fake, img_source)
+        loss_KL = 0
+        return [[loss_Rec, loss_KL], img_fake]
+
 
     def save(self, epoch_label):
+        '''
         self.save_net(self.M1, 'M1', epoch_label, self.gpu_ids)
         self.save_net(self.E, 'E', epoch_label, self.gpu_ids)
         self.save_net(self.M2, 'M2', epoch_label, self.gpu_ids)
         self.save_net(self.D, 'D', epoch_label, self.gpu_ids)
-
+        '''
+        self.save_net(self.G, 'G', epoch_label, self.gpu_ids)
     def update_lr(self):
         lr_decay = self.opt.lr / (self.opt.niter_decay + 1)
         lr = self.old_lr - lr_decay
