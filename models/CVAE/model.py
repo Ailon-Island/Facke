@@ -89,7 +89,7 @@ class CVAE(ModelBase):
         X = self.M1(img_source, img_target)
 
         # mu, log_var, X_ID = self.E(X)
-        mu, log_var, _ = self.E(X)
+        mu, log_var = self.E(X)
         z = self.reparameterize(mu, log_var)
         Inject_z = self.M2(z, latent_ID)
         # print("=========In CVAE.forward=======")
