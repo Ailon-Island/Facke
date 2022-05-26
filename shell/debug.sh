@@ -1,5 +1,5 @@
 #! /bin/bash
-#SBATCH -J Facke
+#SBATCH -J Facke_dbg
 #SBATCH -p gpu
 #SBATCH -N 1
 #SBATCH -o log.out
