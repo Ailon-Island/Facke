@@ -66,7 +66,7 @@ class Trainer:
         print_delta     = self.total_iter % opt.print_freq
         save_delta      = self.total_iter % opt.save_latest_freq
 
-        for batch_idx, ((img_source, _), (latent_ID, _), _) in enumerate(self.loader, start=1):
+        for batch_idx, ((img_source, img_target), (latent_ID, _), is_same_ID) in enumerate(self.loader, start=1):
             self.model.train()
             if opt.debug:
                 print('Batch {}: model instance to be trained iter: {}.'.format(batch_idx, self.model.module.iter))
@@ -75,17 +75,20 @@ class Trainer:
                 iter_start_time = time.time()
 
             if len(opt.gpu_ids):
-                img_source, latent_ID = img_source.to('cuda'), latent_ID.to('cuda')
+                img_target, latent_ID = img_target.to('cuda'), latent_ID.to('cuda')
+
 
             # count iterations
-            batch_size              = img_source.shape[0]
+            batch_size              = len(is_same_ID)
             self.total_iter        += batch_size
             self.model.module.iter  = self.total_iter
             epoch_iter             += batch_size
 
 
+            is_same_ID = is_same_ID[0].detach().item()
+
             ########### FORWARD ###########
-            [losses, _] = model(img_source, latent_ID)
+            [losses, _] = model(img_target, latent_ID, is_same_ID)
 
             ############ LOSSES ############
             # gather losses
@@ -96,7 +99,7 @@ class Trainer:
             loss_dict = get_loss_dict(self.model.module.loss_names, losses, opt)
 
             # calculate final loss scalar
-            loss = loss_dict['Rec'] + loss_dict['KL']
+            loss = loss_dict['ID'] + loss_dict['Rec'] + loss_dict['KL']
 
             ############ BACKWARD ############
             self.model.module.optim.zero_grad()
@@ -127,7 +130,7 @@ class Trainer:
                 self.model.module.eval()
                 self.model.module.isTrain = False
                 with torch.no_grad():
-                    img_source = img_source[:self.sample_size]
+                    img_source = img_source[:self.sample_size].to('cuda')
                     latent_ID = latent_ID[:self.sample_size]
 
                     imgs = []
@@ -191,15 +194,17 @@ def test(opt, model, loader, epoch_idx, total_iter, visualizer):
     print('Testing...')
     if opt.debug:
         print('Model instance being tested iter: {}.'.format(model.module.iter))
-    for batch_idx, ((img_source, _), (latent_ID, _), _) in enumerate(tqdm.tqdm(loader)):
-        batch_size = img_source.shape[0]
+    for batch_idx, ((img_source, img_target), (latent_ID, _), is_same_ID) in enumerate(tqdm.tqdm(loader)):
+        batch_size = len(is_same_ID)
         test_iter += batch_size
 
         if len(opt.gpu_ids):
-            img_source, latent_ID = img_source.to('cuda'), latent_ID.to('cuda')
+            img_target, latent_ID = img_target.to('cuda'), latent_ID.to('cuda')
+
+        is_same_ID = is_same_ID[0].detach().item()
 
         ########### FORWARD ###########
-        [losses, _] = model(img_source, latent_ID)
+        [losses, _] = model(img_target, latent_ID, is_same_ID)
         
         # gather losses
         losses = [torch.mean(x) if not isinstance(x, int) else x for x in losses]
@@ -229,7 +234,7 @@ def test(opt, model, loader, epoch_idx, total_iter, visualizer):
             model.module.eval()
             model.module.isTrain = False
             with torch.no_grad():
-                img_source = img_source[:sample_size]
+                img_source = img_source[:sample_size].to('cuda')
                 latent_ID = latent_ID[:sample_size]
 
                 imgs = []
@@ -289,9 +294,9 @@ if __name__ == '__main__':
         from torch.cuda.amp import autocast
 
     print("Generating data loaders...")
-    train_data = VGGFace2HQDataset(opt, isTrain=True, transform=transformer_Arcface, is_same_ID=True, auto_same_ID=False)
+    train_data = VGGFace2HQDataset(opt, isTrain=True, transform=transformer_Arcface, is_same_ID=True, auto_same_ID=True)
     train_loader = DataLoader(dataset=train_data, batch_size=opt.batchSize, shuffle=True, num_workers=opt.nThreads, worker_init_fn=train_data.set_worker)
-    test_data = VGGFace2HQDataset(opt, isTrain=False, transform=transformer_Arcface, is_same_ID=True, auto_same_ID=False)
+    test_data = VGGFace2HQDataset(opt, isTrain=False, transform=transformer_Arcface, is_same_ID=True, auto_same_ID=True)
     test_loader = DataLoader(dataset=test_data, batch_size=opt.batchSize, shuffle=True, num_workers=opt.nThreads, worker_init_fn=train_data.set_worker)
     print("Dataloaders ready.")
     opt.max_dataset_size = min(opt.max_dataset_size, len(train_data))

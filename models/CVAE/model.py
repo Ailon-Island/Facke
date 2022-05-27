@@ -57,10 +57,15 @@ class CVAE(ModelBase):
         # self.G = networks.Generator(in_channels=3,out_channels=3,latent_size=512,num_ID_blocks = 0)
         # self.G = self.G.to(device)
 
+        # ID network
+        self.ID_extract = IDExtractor(self.opt)
+        self.ID_extract.eval()
+
         # loss functions
-        self.loss_names = ['Rec', 'KL']
+        self.loss_names = ['Rec', 'KL', 'ID']
         self.Recloss = nn.L1Loss()
-        self.KLloss = loss.KLLoss(Weight= 0.00025)
+        self.KLloss = loss.KLLoss(Weight=opt.lambda_KL)
+        self.IDloss = loss.IDLoss()
         
         # optimizers
         params = list(self.M1.parameters()) + list(self.E.parameters()) + list(self.M2.parameters()) + list(self.D.parameters())
@@ -84,8 +89,10 @@ class CVAE(ModelBase):
         eps = torch.rand_like(std)
         return eps* std + mu
 
-    def forward(self, Img, latent_ID):
-        
+    def forward(self, Img, latent_ID, is_same_ID=False):
+
+        loss_Rec, loss_KL, loss_ID = torch.tensor(0., device=Img.device), torch.tensor(0., device=Img.device), torch.tensor(0., device=Img.device)
+
         X = self.M1(Img, latent_ID)
 
         # mu, log_var, X_ID = self.E(X)
@@ -109,10 +116,15 @@ class CVAE(ModelBase):
 
         Fake = self.INnorm(Fake)
 
+        latent_ID_fake = self.ID_extract(Fake)
+        loss_ID = self.IDloss(latent_ID_fake, latent_ID)
+        loss_ID *= self.opt.lambda_id
         loss_Rec = self.Recloss(Fake, Img)
+        if not is_same_ID:
+            loss_Rec *= self.opt.lambda_rec_swap
         loss_KL = self.KLloss(mu, log_var)
 
-        return [[loss_Rec, loss_KL], Fake]
+        return [[loss_Rec, loss_KL, loss_ID], Fake]
         
         # img_fake = self.G(img_target,latent_ID)
         # if not self.isTrain:
