@@ -42,8 +42,8 @@ import torch.cuda
 
 
 class Transform:
-    def __int__(self):
-        super(Transform, self).__int__()
+    def __init__(self):
+        super(Transform, self).__init__()
 
     def __call__(self, x):
         return x * 2 - 1
@@ -51,8 +51,8 @@ class Transform:
 
 
 class DeTransform:
-    def __int__(self):
-        super(DeTransform, self).__int__()
+    def __init__(self):
+        super(DeTransform, self).__init__()
 
     def __call__(self, x):
         return (x + 1) / 2
