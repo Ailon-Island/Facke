@@ -165,7 +165,7 @@ class CVAE(ModelBase):
         feat_D2_fake = self.D2.forward(Fake_down)
         pred_D_fake = [feat_D1_fake, feat_D2_fake]
         feat_D_fake = pred_D_fake
-        loss_G_GAN = self.GANloss(pred_D_fake, is_real=False, forD = False)
+        loss_G_GAN = self.GANloss(pred_D_fake, is_real=True, forD = False)
 
         if self.training:
             return [[loss_Rec, loss_KL, loss_ID, loss_G_GAN, loss_D_real, loss_D_fake, loss_D_GP], Fake]
