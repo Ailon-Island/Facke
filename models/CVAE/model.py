@@ -158,7 +158,7 @@ class CVAE(ModelBase):
 
         loss_D_GP = self.GPloss(self.D1, Img, Fake.detach())
         loss_D_GP += self.GPloss(self.D2, Img_down, Fake_down.detach())
-        loss_D_GP *= self.opt.labmda_GP
+        loss_D_GP *= self.opt.lambda_GP
 
 
         feat_D1_fake = self.D1.forward(Fake)
