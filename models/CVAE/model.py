@@ -196,7 +196,8 @@ class CVAE(ModelBase):
         self.save_net(self.M2, 'M2', epoch_label, self.gpu_ids)
         self.save_net(self.D, 'D', epoch_label, self.gpu_ids)
 
-        self.save_net(self.Dis,'Dis', epoch_label, self.gpu_ids)
+        self.save_net(self.D1,'D1', epoch_label, self.gpu_ids)
+        self.save_net(self.D2,'D2', epoch_label, self.gpu_ids)
         # self.save_net(self.G, 'G', epoch_label, self.gpu_ids)
     def update_lr(self):
         lr_decay = self.opt.lr / (self.opt.niter_decay + 1)
