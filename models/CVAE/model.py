@@ -107,7 +107,9 @@ class CVAE(ModelBase):
 
     def forward(self, Img, latent_ID, is_same_ID=False):
 
-        loss_Rec, loss_KL, loss_ID = torch.tensor(0., device=Img.device), torch.tensor(0., device=Img.device), torch.tensor(0., device=Img.device)
+        loss_KL = 0
+        loss_D_real, loss_D_fake, loss_D_GP = 0, 0, 0
+        loss_G_GAN, loss_G_FM, loss_ID, loss_Rec =  0, 0, 0, 0
 
         X = self.M1(Img, latent_ID)
 
@@ -135,10 +137,15 @@ class CVAE(ModelBase):
         latent_ID_fake = self.ID_extract(Fake)
         loss_ID = self.IDloss(latent_ID_fake, latent_ID)
         loss_ID *= self.opt.lambda_id
+
         loss_Rec = self.Recloss(Fake, Img)
         if not is_same_ID:
             loss_Rec *= self.opt.lambda_rec_swap
+        else:
+            loss_Rec *= self.opt.lambda_rec
+
         loss_KL = self.KLloss(mu, log_var)
+        loss_KL *= self.opt.lambda_KL_out
 
         Fake_down = self.downsample(Fake)
         Img_down = self.downsample(Img)
@@ -189,7 +196,8 @@ class CVAE(ModelBase):
         self.save_net(self.M2, 'M2', epoch_label, self.gpu_ids)
         self.save_net(self.D, 'D', epoch_label, self.gpu_ids)
 
-        self.save_net(self.Dis,'Dis', epoch_label, self.gpu_ids)
+        self.save_net(self.D1,'D1', epoch_label, self.gpu_ids)
+        self.save_net(self.D2,'D2', epoch_label, self.gpu_ids)
         # self.save_net(self.G, 'G', epoch_label, self.gpu_ids)
     def update_lr(self):
         lr_decay = self.opt.lr / (self.opt.niter_decay + 1)
