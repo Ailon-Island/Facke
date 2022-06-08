@@ -99,13 +99,18 @@ class Trainer:
             loss_dict = get_loss_dict(self.model.module.loss_names, losses, opt)
 
             # calculate final loss scalar
-            loss = loss_dict['ID'] + loss_dict['Rec'] + loss_dict['KL']
+            loss_G = loss_dict['G_GAN'] + loss_dict['G_Rec'] + loss_dict['G_KL'] + loss_dict['G_ID']
+            loss_D = loss_dict['D_real'] + loss_dict['D_fake'] + loss_dict['D_GP']
+
 
             ############ BACKWARD ############
             self.model.module.optim.zero_grad()
-            loss.backward()
+            loss_G.backward()
             self.model.module.optim.step()
-
+            self.model.module.optim_D.zero_grad()
+            loss_D.backward()
+            self.model.module.optim_D.step()
+            
             # save loss
             losses = [loss if isinstance(loss, int) else loss.detach().cpu().item() for loss in losses]
             self.losses += [losses]
