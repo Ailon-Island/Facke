@@ -57,20 +57,36 @@ class CVAE(ModelBase):
         # self.G = networks.Generator(in_channels=3,out_channels=3,latent_size=512,num_ID_blocks = 0)
         # self.G = self.G.to(device)
 
+        self.downsample = nn.AvgPool2d(kernel_size=3, stride=2, padding=[1, 1], count_include_pad=False)
+
+        #Discriminators
+        if opt.gan_mode == 'original':
+            use_sigmoid = True
+        else:
+            use_sigmoid = False
+
+        self.D1 = networks.Discriminator(in_channels=3, use_sigmoid=use_sigmoid)
+        self.D1 = self.DReal.to(device)
+        self.D2 = networks.Discriminator(in_channels=3, use_sigmoid=use_sigmoid)
+        self.D2 = self.DFake.to(device)
+
         # ID network
         self.ID_extract = IDExtractor(self.opt)
         self.ID_extract.eval()
 
         # loss functions
-        self.loss_names = ['Rec', 'KL', 'ID']
+        self.loss_names = ['G_Rec', 'G_KL', 'G_ID', 'G_GAN', 'D_real','D_fake','D_GP']
         self.Recloss = nn.L1Loss()
         self.KLloss = loss.KLLoss(Weight=opt.lambda_KL)
         self.IDloss = loss.IDLoss()
-        
+        self.GANloss = loss.GANLoss(opt.gan_mode, Tensor=self.Tensor, opt = opt)
+        self.GPloss = loss.GPLoss()
         # optimizers
         params = list(self.M1.parameters()) + list(self.E.parameters()) + list(self.M2.parameters()) + list(self.D.parameters())
         self.optim = torch.optim.Adam(params, lr = opt.lr, betas=(opt.beta1, 0.999))
         
+        params = list(self.D1.parameters()) + list(self.D2.parameters())
+        self.optim_D = torch.optim.Adam(params,lr=opt.lr, betas=(opt.beta1, 0.999))
         # params = list(self.G.parameters())
         # self.optim = torch.optim.Adam(params, lr = opt.lr, betas=(opt.beta1, 0.999))
 
@@ -124,7 +140,37 @@ class CVAE(ModelBase):
             loss_Rec *= self.opt.lambda_rec_swap
         loss_KL = self.KLloss(mu, log_var)
 
-        return [[loss_Rec, loss_KL, loss_ID], Fake]
+        Fake_down = self.downsample(Fake)
+        Img_down = self.downsample(Img)
+
+        feat_D1_fake = self.D1(Fake.detach())
+        feat_D2_fake = self.D2(Fake_down.detach())
+        pred_D_fake = [feat_D1_fake,feat_D2_fake]
+
+        loss_D_fake = self.GANloss(pred_D_fake,is_real=False,forD=True)
+        
+        feat_D1_real = self.D1(Img)
+        feat_D2_real = self.D2(Img_down)
+        pred_D_real = [feat_D1_real, feat_D2_real]
+        feat_D_real = pred_D_real
+
+        loss_D_real = self.GANloss(pred_D_real, is_real= True, forD = True)
+
+        loss_D_GP = self.GPloss(self.D1, Img, Fake.detach())
+        loss_D_GP += self.GPloss(self.D2, Img_down, Fake_down.detach())
+        loss_D_GP *= self.opt.labmda_GP
+
+
+        feat_D1_fake = self.D1.forward(Fake)
+        feat_D2_fake = self.D2.forward(Fake_down)
+        pred_D_fake = [feat_D1_fake, feat_D2_fake]
+        feat_D_fake = pred_D_fake
+        loss_G_GAN = self.GANloss(pred_D_fake, is_real=False, forD = False)
+
+        if self.training:
+            return [[loss_Rec, loss_KL, loss_ID, loss_G_GAN, loss_D_real, loss_D_fake, loss_D_GP], Fake]
+        else:
+            return [[loss_Rec.detach(), loss_KL.detach(), loss_ID.detach(), loss_G_GAN.detach(), loss_D_real.detach(), loss_D_fake.detach(), loss_D_GP.detach()], Fake]
         
         # img_fake = self.G(img_target,latent_ID)
         # if not self.isTrain:
@@ -143,6 +189,7 @@ class CVAE(ModelBase):
         self.save_net(self.M2, 'M2', epoch_label, self.gpu_ids)
         self.save_net(self.D, 'D', epoch_label, self.gpu_ids)
 
+        self.save_net(self.Dis,'Dis', epoch_label, self.gpu_ids)
         # self.save_net(self.G, 'G', epoch_label, self.gpu_ids)
     def update_lr(self):
         lr_decay = self.opt.lr / (self.opt.niter_decay + 1)

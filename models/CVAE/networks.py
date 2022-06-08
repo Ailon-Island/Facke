@@ -323,3 +323,68 @@ class Generator(nn.Module):
 
         return x
 
+
+class Discriminator(nn.Module):
+    def __init__(self, in_channels, norm=nn.BatchNorm2d, activation=nn.LeakyReLU(0.2, True), use_sigmoid=False):
+        super(Discriminator, self).__init__()
+
+        kernel_size = 4
+        padding = 1
+
+        self.down1 = nn.Sequential(
+            nn.Conv2d(in_channels, 64, kernel_size=kernel_size, stride=2, padding=padding),
+            activation
+        )
+        self.down2 = nn.Sequential(
+            nn.Conv2d(64, 128, kernel_size=kernel_size, stride=2, padding=padding),
+            norm(128),
+            activation
+        )
+        self.down3 = nn.Sequential(
+            nn.Conv2d(128, 256, kernel_size=kernel_size, stride=2, padding=padding),
+            norm(256),
+            activation
+        )
+        self.down4 = nn.Sequential(
+            nn.Conv2d(256, 512, kernel_size=kernel_size, stride=2, padding=padding),
+            norm(512),
+            activation
+        )
+
+        self.conv1 = nn.Sequential(
+            nn.Conv2d(512, 512, kernel_size=kernel_size, stride=1, padding=padding),
+            norm(512),
+            activation
+        )
+
+        if use_sigmoid:
+            self.conv2 = nn.Sequential(
+                nn.Conv2d(512, 1, kernel_size=kernel_size, stride=1, padding=padding),
+                nn.Sigmoid()
+            )
+        else:
+            self.conv2 = nn.Sequential(
+                nn.Conv2d(512, 1, kernel_size=kernel_size, stride=1, padding=padding)
+            )
+
+
+    def forward(self, x):
+        out = []
+
+        x = self.down1(x)
+        out += [x]
+        x = self.down2(x)
+        out += [x]
+        x = self.down3(x)
+        out += [x]
+        x = self.down4(x)
+        out += [x]
+
+        x = self.conv1(x)
+        out += [x]
+        x = self.conv2(x)
+        out += [x]
+
+        return out
+
+
