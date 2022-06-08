@@ -36,7 +36,7 @@ class TrainOptions(BaseOptions):
         self.parser.add_argument('--lambda_FM', type=float, default=10.0, help='weight for feature matching loss')
         self.parser.add_argument('--lambda_id', type=float, default=30.0, help='weight for id loss')
         self.parser.add_argument('--lambda_rec', type=float, default=10.0, help='weight for reconstruction loss')
-        self.parser.add_argument('--lambda_rec_swap', type=float, default=0.5, help='weight for reconstruction loss in CVAE while swapping')
+        self.parser.add_argument('--lambda_rec_swap', type=float, default=0.8, help='weight for reconstruction loss in CVAE while swapping')
         self.parser.add_argument('--lambda_GP', type=float, default=1E-5, help='weight for gradient penalty loss')
         self.parser.add_argument('--lambda_KL', type=float, default=0.00025, help='weight for KL loss in CVAE')
         self.parser.add_argument('--feat_mode', type=str, default='w', help='the variant of feature matching to use, default weak')
