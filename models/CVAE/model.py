@@ -66,9 +66,9 @@ class CVAE(ModelBase):
             use_sigmoid = False
 
         self.D1 = networks.Discriminator(in_channels=3, use_sigmoid=use_sigmoid)
-        self.D1 = self.DReal.to(device)
+        self.D1 = self.D1.to(device)
         self.D2 = networks.Discriminator(in_channels=3, use_sigmoid=use_sigmoid)
-        self.D2 = self.DFake.to(device)
+        self.D2 = self.D2.to(device)
 
         # ID network
         self.ID_extract = IDExtractor(self.opt)
