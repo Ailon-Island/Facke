@@ -7,6 +7,7 @@ from collections import OrderedDict
 import time
 import tqdm
 import warnings
+import matplotlib.pyplot as plt
 
 import torch
 from torch import nn
@@ -185,6 +186,9 @@ if __name__ == '__main__':
 
         best[metric] = (epoch_label, metrics_tmp)
 
-    print(best)
+    print("Best ID Retrieval:\t [iter {}] ID Loss: {.3f}, ID Retrieval: {.3f}, Recon Loss: {.3f}.".format(best['ID Retrieval'][0], *best['ID Retrieval'][1]))
+    print("Best Recon Loss:\t [iter {}] ID Loss: {.3f}, ID Retrieval: {.3f}, Recon Loss: {.3f}.".format(best['Recon Loss'][0], *best['Recon Loss'][1]))
+    print("Best ID Retrieval + Recon Loss:\t [iter {}] ID Loss: {.3f}, ID Retrieval: {.3f}, Recon Loss: {.3f}.".format(best['ID Retrieval + Recon Loss'][0], *best['ID Retrieval + Recon Loss'][1]))
 
-
+    benchmark_dir = os.path.join(opt.checkpoints_dir, opt.name, 'benchmark_metrics.pth')
+    torch.save(metrics, benchmark_dir)
