@@ -33,13 +33,34 @@ Common_mean = [0.5, 0.5, 0.5]
 Common_std = [0.5, 0.5, 0.5]
 ImageNet_mean, ImageNet_std, Common_mean, Common_std = torch.Tensor(ImageNet_mean), torch.Tensor(ImageNet_std), torch.Tensor(Common_mean), torch.Tensor(ImageNet_mean)
 
+
+def logger(msg):
+    with open(file_name, 'wt') as log_file:
+        log_file.write(msg)
+    print(msg)
+
+
+
 if __name__ == '__main__':
     warnings.filterwarnings("ignore")
 
     # args = create_argparser().parse_args()
     opt = TestOptions().parse()
 
-    # th.manual_seed(0)
+    save_path = os.path.join(opt.checkpoints_dir, opt.name)
+    if not os.path.exists(save_path):
+        os.mkdir(save_path)
+    if not os.path.exists(os.path.join(save_path, 'benchmark_opt.txt')):
+        file_name = os.path.join(save_path, 'benchmark_opt.txt')
+        with open(file_name, 'wt') as opt_file:
+            opt_file.write('------------ Options -------------\n')
+            for k, v in sorted(vars(opt).items()):
+                opt_file.write('%s: %s\n' % (str(k), str(v)))
+            opt_file.write('-------------- End ----------------\n')
+    if not os.path.exists(os.path.join(save_path, 'benchmark_log.txt'))
+        file_name = os.path.join(save_path, 'benchmark_log.txt')
+        with open(file_name, 'wt') as log_file:
+            log_file.write('===============benchmark start=================')
 
     if torch.cuda.is_available():
         device = 'cuda'
@@ -141,7 +162,7 @@ if __name__ == '__main__':
         # calculate mean
         for k in metrics:
             metrics[k][-1] /= count
-        print("[iter {}] ID Loss: {:.3f}, ID Retrieval: {:.3f}, Recon Loss: {:.3f}.".format(epoch_label, metrics['ID Loss'][-1], metrics['ID Retrieval'][-1], metrics['Recon Loss'][-1]))
+        logger("[iter {}] ID Loss: {:.3f}, ID Retrieval: {:.3f}, Recon Loss: {:.3f}.".format(epoch_label, metrics['ID Loss'][-1], metrics['ID Retrieval'][-1], metrics['Recon Loss'][-1]))
 
         # check if is best
         if metrics['ID Retrieval'][-1] < best['ID Retrieval'][1]:
@@ -187,9 +208,9 @@ if __name__ == '__main__':
 
         best[metric] = (epoch_label, metrics_tmp)
 
-    print("Best ID Retrieval:\t [iter {}] ID Loss: {:.3f}, ID Retrieval: {:.3f}, Recon Loss: {:.3f}.".format(best['ID Retrieval'][0], *best['ID Retrieval'][1]))
-    print("Best Recon Loss:\t [iter {}] ID Loss: {:.3f}, ID Retrieval: {:.3f}, Recon Loss: {:.3f}.".format(best['Recon Loss'][0], *best['Recon Loss'][1]))
-    print("Best ID Retrieval + Recon Loss:\t [iter {}] ID Loss: {:.3f}, ID Retrieval: {:.3f}, Recon Loss: {:.3f}.".format(best['ID Retrieval + Recon Loss'][0], *best['ID Retrieval + Recon Loss'][1]))
+    logger("Best ID Retrieval:\t [iter {}] ID Loss: {:.3f}, ID Retrieval: {:.3f}, Recon Loss: {:.3f}.".format(best['ID Retrieval'][0], *best['ID Retrieval'][1]))
+    logger("Best Recon Loss:\t [iter {}] ID Loss: {:.3f}, ID Retrieval: {:.3f}, Recon Loss: {:.3f}.".format(best['Recon Loss'][0], *best['Recon Loss'][1]))
+    logger("Best ID Retrieval + Recon Loss:\t [iter {}] ID Loss: {:.3f}, ID Retrieval: {:.3f}, Recon Loss: {:.3f}.".format(best['ID Retrieval + Recon Loss'][0], *best['ID Retrieval + Recon Loss'][1]))
 
     benchmark_dir = os.path.join(opt.checkpoints_dir, opt.name, 'benchmark_metrics.pth')
     torch.save(metrics, benchmark_dir)
