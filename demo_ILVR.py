@@ -72,7 +72,7 @@ if __name__ == '__main__':
     detransform = DeTransform()
 
     print("Generating data loaders...")
-    test_data = VGGFace2HQDataset(opt, isTrain=False, transform=transform, is_same_ID=True, auto_same_ID=True)
+    test_data = VGGFace2HQDataset(opt, isTrain=False, transform=transform, is_same_ID=True, auto_same_ID=False)
     test_loader = DataLoader(dataset=test_data, batch_size=opt.batchSize, shuffle=True, num_workers=opt.nThreads,
                              worker_init_fn=test_data.set_worker)
     print("Dataloaders ready.")
