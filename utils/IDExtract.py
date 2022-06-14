@@ -9,8 +9,11 @@ class IDExtractor(nn.Module):
 
         if model == 'Arcface':
             checkpoint = opt.Arc_path
+            self.interp_size = (112, 112)
         elif model == 'Cosface':
             checkpoint = opt.Cos_path
+            self.interp_size = (112, 96)
+
 
         if torch.cuda.is_available():
             checkpoint = torch.load(checkpoint)
@@ -29,7 +32,7 @@ class IDExtractor(nn.Module):
             if model == 'CosFace' else self.INnorm
 
     def forward(self, img):
-        img_interp = F.interpolate(img, size=(112,112))
+        img_interp = F.interpolate(img, size=self.interp_size)
         # img_interp = self.transform(img_interp)
         latent_ID = self.net(img_interp)
         latent_ID = F.normalize(latent_ID, p=2, dim=1)
