@@ -121,6 +121,7 @@ class VGGFace2HQDataset(DatasetBase):
                 img = img.to('cuda')
             else:
                 img = img.to("cpu")
+            img = self.ID_extract.INnorm(img)
             latent_ID = self.ID_extract(img).cpu().numpy()
             latent_ID = latent_ID.reshape(-1)
             np.save(save_pth, latent_ID)

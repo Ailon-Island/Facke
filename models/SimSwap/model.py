@@ -17,7 +17,6 @@ class SimSwapGAN(ModelBase):
     def __init__(self):
         super(SimSwapGAN, self).__init__()
 
-
     def init(self, opt):
         if opt.verbose:
             print("Initializing SimSwap model...")
@@ -168,8 +167,9 @@ class SimSwapGAN(ModelBase):
 
     def load(self, epoch_label):
         self.load_net(self.G, 'G', epoch_label, self.gpu_ids)
-        self.load_net(self.D1, 'D1', epoch_label, self.gpu_ids)
-        self.load_net(self.D2, 'D2', epoch_label, self.gpu_ids)
+        if self.isTrain:
+            self.load_net(self.D1, 'D1', epoch_label, self.gpu_ids)
+            self.load_net(self.D2, 'D2', epoch_label, self.gpu_ids)
 
 
     def unlock_G(self):

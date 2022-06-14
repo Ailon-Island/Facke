@@ -9,13 +9,13 @@ class IDExtractor(nn.Module):
 
         if model == 'Arcface':
             checkpoint = opt.Arc_path
-        elif model == 'CosFace':
-            netCos_checkpoint = opt.Cos_path
+        elif model == 'Cosface':
+            checkpoint = opt.Cos_path
 
         if torch.cuda.is_available():
             checkpoint = torch.load(checkpoint)
         else:
-            checkpoint = torch.load(checkpoint,map_location=torch.device('cpu'))
+            checkpoint = torch.load(checkpoint, map_location=torch.device('cpu'))
         self.net = checkpoint['model'].module
         if torch.cuda.is_available():
             self.net = self.net.to('cuda')

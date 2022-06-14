@@ -51,7 +51,11 @@ class ILVR(ModelBase):
         )
         self.model = model
         self.diffusion = diffusion
-        self.model.load_state_dict(torch.load(opt.DDPM_pth))
+        if opt.finetuned:
+            self.model.load_state_dict(torch.load())
+        else:
+            self.load(opt.epoch_label)
+
         self.model.to(self.device)
         if opt.fp16:
             self.model.convert_to_fp16()
@@ -156,7 +160,7 @@ class ILVR(ModelBase):
 
 
     def save(self, epoch_label):
-        self.save_net(self.model,  'DDPM', epoch_label, self.gpu_ids)
+        self.save_net(self.model, 'DDPM', epoch_label, self.gpu_ids)
 
 
     def load(self, epoch_label):

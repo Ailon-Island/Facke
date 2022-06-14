@@ -39,5 +39,10 @@ class TestOptions(BaseOptions):
         self.parser.add_argument('--no_simswaplogo', action='store_true', help='Remove the watermark')
         self.parser.add_argument('--use_mask', action='store_true', help='Use mask for better result')
         self.parser.add_argument('--crop_size', type=int, default=224, help='Crop of size of input image')
-        
+        self.parser.add_argument('--finetuned', action='store_true')
+        self.parser.add_argument('--benchmark_coarse', type=int, default=4000, help='samples to run in coarse benchmark')
+        self.parser.add_argument('--benchmark_fine', type=int, default=20000, help='samples to run in fine benchmark')
+
+
+
         self.isTrain = False
