@@ -84,10 +84,10 @@ if __name__ == '__main__':
 
     if opt.model == 'ILVR':
         def swap(img_source, img_target, latent_ID):
-            model.swap(img_source, img_target)
+            return model.swap(img_source, img_target)
     else:
         def swap(img_source, img_target, latent_ID):
-            model(img_source, img_target, latent_ID, latent_ID) # latent_ID_target is not used in eval()
+            return model(img_source, img_target, latent_ID, latent_ID) # latent_ID_target is not used in eval()
 
     if opt.model == 'ILVR':
         dict_dir = 'DDPM'
@@ -122,7 +122,6 @@ if __name__ == '__main__':
                 img_source, img_target, latent_ID = img_source.to(device), img_target.to(device), latent_ID.to(device)
 
                 img_fake = swap(img_source, img_target, latent_ID)
-                print("Type of img_fake:", type(img_fake))
                 img_fake = norm(img_fake)
 
                 fake_ID = ArcExtract(img_fake)
