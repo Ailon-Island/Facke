@@ -27,6 +27,7 @@ class TestOptions(BaseOptions):
         self.parser.add_argument("--engine", type=str, help="run serialized TRT engine")
         self.parser.add_argument("--onnx", type=str, help="run ONNX model via TRT")        
         self.parser.add_argument("--Arc_path", type=str, default='utils/Arcface/arcface_checkpoint.tar', help="run ONNX model via TRT")
+        self.parser.add_argument("--Cos_path", type=str, default='utils/Cosface/cosface_checkpoint.pth', help="CosFace model checkpoint")
         self.parser.add_argument("--pic_a_path", type=str, default='./crop_224/gdg.jpg', help="Person who provides identity information")
         self.parser.add_argument("--pic_b_path", type=str, default='./crop_224/zrf.jpg', help="Person who provides information other than their identity")
         self.parser.add_argument("--pic_specific_path", type=str, default='./crop_224/zrf.jpg', help="The specific person to be swapped")
@@ -38,5 +39,10 @@ class TestOptions(BaseOptions):
         self.parser.add_argument('--no_simswaplogo', action='store_true', help='Remove the watermark')
         self.parser.add_argument('--use_mask', action='store_true', help='Use mask for better result')
         self.parser.add_argument('--crop_size', type=int, default=224, help='Crop of size of input image')
-        
+        self.parser.add_argument('--finetuned', action='store_true')
+        self.parser.add_argument('--benchmark_coarse', type=int, default=4000, help='samples to run in coarse benchmark')
+        self.parser.add_argument('--benchmark_fine', type=int, default=20000, help='samples to run in fine benchmark')
+
+
+
         self.isTrain = False
