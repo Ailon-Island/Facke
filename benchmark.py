@@ -141,6 +141,7 @@ if __name__ == '__main__':
         # calculate mean
         for k in metrics:
             metrics[k][-1] /= count
+        print("[iter {}] ID Loss: {.3f}, ID Retrieval: {.3f}, Recon Loss: {.3f}.".format(epoch_label, metrics['ID Loss'][-1], metrics['ID Retrieval'][-1], metrics['Recon Loss'][-1]))
 
         # check if is best
         if metrics['ID Retrieval'][-1] < best['ID Retrieval'][1]:
