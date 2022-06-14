@@ -1,4 +1,5 @@
 import os
+import re
 import shutil
 import numpy as np
 import math
@@ -99,6 +100,8 @@ if __name__ == '__main__':
     check_list = os.listdir(check_list)
     check_list = [i.split('.')[0] for i in check_list]
     check_list.remove('latest')
+    check_list.sort(key=lambda x: int(re.findall('\d+', x)[0]))
+    print(check_list)
 
     metrics = {'ID Loss': [], 'ID Retrieval': [], 'Recon Loss': []}
     best = {'ID Retrieval': (None, np.inf), 'Recon Loss': (None, np.inf), 'ID Retrieval + Recon Loss': (None, np.inf)}
