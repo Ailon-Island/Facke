@@ -122,6 +122,7 @@ if __name__ == '__main__':
                 img_source, img_target, latent_ID = img_source.to(device), img_target.to(device), latent_ID.to(device)
 
                 img_fake = swap(img_source, img_target, latent_ID)
+                print("Type of img_fake:", type(img_fake))
                 img_fake = norm(img_fake)
 
                 fake_ID = ArcExtract(img_fake)
