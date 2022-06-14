@@ -30,7 +30,7 @@ ImageNet_mean = [0.485, 0.456, 0.406]
 ImageNet_std = [0.229, 0.224, 0.225]
 Common_mean = [0.5, 0.5, 0.5]
 Common_std = [0.5, 0.5, 0.5]
-ImageNet_mean, ImageNet_std, Common_mean, Common_std = np.array(ImageNet_mean), np.array(ImageNet_std), np.array(Common_mean), np.array(ImageNet_mean)
+ImageNet_mean, ImageNet_std, Common_mean, Common_std = torch.Tensor(ImageNet_mean), torch.Tensor(ImageNet_std), torch.Tensor(Common_mean), torch.Tensor(ImageNet_mean)
 
 if __name__ == '__main__':
     warnings.filterwarnings("ignore")
@@ -101,7 +101,6 @@ if __name__ == '__main__':
     check_list = [i.split('.')[0] for i in check_list]
     check_list.remove('latest')
     check_list.sort(key=lambda x: int(re.findall('\d+', x)[0]))
-    print(check_list)
 
     metrics = {'ID Loss': [], 'ID Retrieval': [], 'Recon Loss': []}
     best = {'ID Retrieval': (None, np.inf), 'Recon Loss': (None, np.inf), 'ID Retrieval + Recon Loss': (None, np.inf)}
