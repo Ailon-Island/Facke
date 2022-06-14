@@ -143,12 +143,12 @@ if __name__ == '__main__':
             metrics[k][-1] /= count
 
         # check if is best
-        if metrics['ID Retrieval'] < best['ID Retrieval'][1]:
-            best['ID Retrieval'] = (epoch_label, metrics['ID Retrieval'])
-        if metrics['Recon Loss'] < best['Recon Loss'][1]:
-            best['Recon Loss'] = (epoch_label, metrics['Recon Loss'])
-        if metrics['ID Retrieval'] + metrics['Recon Loss'] < best['ID Retrieval + Recon Loss'][1]:
-            best['ID Retrieval + Recon Loss'] = (epoch_label, metrics['ID Retrieval'] + metrics['Recon Loss'])
+        if metrics['ID Retrieval'][-1] < best['ID Retrieval'][1]:
+            best['ID Retrieval'] = (epoch_label, metrics['ID Retrieval'][-1])
+        if metrics['Recon Loss'][-1] < best['Recon Loss'][1]:
+            best['Recon Loss'] = (epoch_label, metrics['Recon Loss'][-1])
+        if metrics['ID Retrieval'][-1] + metrics['Recon Loss'][-1] < best['ID Retrieval + Recon Loss'][1]:
+            best['ID Retrieval + Recon Loss'] = (epoch_label, metrics['ID Retrieval'][-1] + metrics['Recon Loss'][-1])
 
     for (metric, (epoch_label, _)) in best.items():
         model.load(epoch_label)
