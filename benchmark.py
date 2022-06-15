@@ -39,7 +39,7 @@ def logger(msg):
     file_name = os.path.join(save_path, 'benchmark_log.txt')
 
     with open(file_name, 'a') as log_file:
-        log_file.write("{msg}\n")
+        log_file.write("{}\n".format(msg))
     print(msg)
 
 
