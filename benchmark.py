@@ -34,7 +34,10 @@ Common_std = [0.5, 0.5, 0.5]
 ImageNet_mean, ImageNet_std, Common_mean, Common_std = torch.Tensor(ImageNet_mean), torch.Tensor(ImageNet_std), torch.Tensor(Common_mean), torch.Tensor(ImageNet_mean)
 
 
-def logger(msg):
+def logger(msg):            
+    save_path = os.path.join(opt.checkpoints_dir, opt.name)
+    file_name = os.path.join(save_path, 'benchmark_log.txt')
+
     with open(file_name, 'a') as log_file:
         log_file.write(msg)
     print(msg)
