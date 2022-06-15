@@ -60,10 +60,10 @@ if __name__ == '__main__':
             for k, v in sorted(vars(opt).items()):
                 opt_file.write('%s: %s\n' % (str(k), str(v)))
             opt_file.write('-------------- End ----------------\n')
-    if not os.path.exists(os.path.join(save_path, 'benchmark_log.txt')):
-        file_name = os.path.join(save_path, 'benchmark_log.txt')
-        with open(file_name, 'wt') as log_file:
-            log_file.write('===============benchmark start=================\n')
+            
+    file_name = os.path.join(save_path, 'benchmark_log.txt')
+    with open(file_name, 'wt') as log_file:
+        log_file.write('===============benchmark start=================\n')
 
     if torch.cuda.is_available():
         device = 'cuda'
