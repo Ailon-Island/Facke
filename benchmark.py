@@ -35,7 +35,7 @@ ImageNet_mean, ImageNet_std, Common_mean, Common_std = torch.Tensor(ImageNet_mea
 
 
 def logger(msg):
-    with open(file_name, 'wt') as log_file:
+    with open(file_name, 'a') as log_file:
         log_file.write(msg)
     print(msg)
 
