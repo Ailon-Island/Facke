@@ -181,7 +181,7 @@ if __name__ == '__main__':
         metrics_tmp = {'ID Loss': 0., 'ID Retrieval': 0., 'Recon Loss': 0.}
         count = 0
 
-        with torch.no_grad:
+        with torch.no_grad():
             for (img_source, img_target), (latent_ID, _), _ in tqdm.tqdm(test_loader):
                 count += img_source.shape[0]
                 if count >= opt.benchmark_fine:
