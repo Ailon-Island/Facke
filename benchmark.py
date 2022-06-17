@@ -213,9 +213,9 @@ if __name__ == '__main__':
 
 
     print(best)
-    logger("Best ID Retrieval:\t [iter {}] ID Loss: {:.3f}, ID Retrieval: {:.3f}, Recon Loss: {:.3f}.".format(best['ID Retrieval'][0], *best['ID Retrieval'][1]))
-    logger("Best Recon Loss:\t [iter {}] ID Loss: {:.3f}, ID Retrieval: {:.3f}, Recon Loss: {:.3f}.".format(best['Recon Loss'][0], *best['Recon Loss'][1]))
-    logger("Best ID Retrieval + Recon Loss:\t [iter {}] ID Loss: {:.3f}, ID Retrieval: {:.3f}, Recon Loss: {:.3f}.".format(best['ID Retrieval + Recon Loss'][0], *best['ID Retrieval + Recon Loss'][1]))
+    logger("Best ID Retrieval:\t [iter {}] ID Loss: {:.3f}, ID Retrieval: {:.3f}, Recon Loss: {:.3f}.".format(best['ID Retrieval'][0], best['ID Retrieval'][1]['ID Loss'], best['ID Retrieval'][1]['ID Retrieval'], best['ID Retrieval'][1]['Recon Loss']))
+    logger("Best Recon Loss:\t [iter {}] ID Loss: {:.3f}, ID Retrieval: {:.3f}, Recon Loss: {:.3f}.".format(best['Recon Loss'][0], best['Recon Loss'][1]['ID Loss'], best['Recon Loss'][1]['ID Retrieval'], best['Recon Loss'][1]['Recon Loss']))
+    logger("Best ID Retrieval + Recon Loss:\t [iter {}] ID Loss: {:.3f}, ID Retrieval: {:.3f}, Recon Loss: {:.3f}.".format(best['ID Retrieval + Recon Loss'][0], best['ID Retrieval + Recon Loss'][1]['ID Loss'], best['ID Retrieval + Recon Loss'][1]['ID Retrieval'], best['ID Retrieval + Recon Loss'][1]['Recon Loss']))
 
     benchmark_dir = os.path.join(opt.checkpoints_dir, opt.name, 'benchmark_metrics.pth')
     torch.save(metrics, benchmark_dir)
