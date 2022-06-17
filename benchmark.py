@@ -211,6 +211,8 @@ if __name__ == '__main__':
 
         best[metric] = (epoch_label, metrics_tmp)
 
+
+    print(best)
     logger("Best ID Retrieval:\t [iter {}] ID Loss: {:.3f}, ID Retrieval: {:.3f}, Recon Loss: {:.3f}.".format(best['ID Retrieval'][0], *best['ID Retrieval'][1]))
     logger("Best Recon Loss:\t [iter {}] ID Loss: {:.3f}, ID Retrieval: {:.3f}, Recon Loss: {:.3f}.".format(best['Recon Loss'][0], *best['Recon Loss'][1]))
     logger("Best ID Retrieval + Recon Loss:\t [iter {}] ID Loss: {:.3f}, ID Retrieval: {:.3f}, Recon Loss: {:.3f}.".format(best['ID Retrieval + Recon Loss'][0], *best['ID Retrieval + Recon Loss'][1]))
