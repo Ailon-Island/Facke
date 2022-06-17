@@ -110,6 +110,9 @@ if __name__ == '__main__':
     if opt.model == 'ILVR':
         def swap(img_source, img_target, latent_ID):
             return model.swap(img_source, img_target)
+    elif opt.model == 'CVAE': # CVAE and CVAE-GAN
+        def swap(img_source, img_target, latent_ID):
+            return model(img_target, latent_ID)
     else:
         def swap(img_source, img_target, latent_ID):
             return model(img_source, img_target, latent_ID, latent_ID) # latent_ID_target is not used in eval()
