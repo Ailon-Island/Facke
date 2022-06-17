@@ -57,6 +57,18 @@ class CVAE(ModelBase):
         # self.G = networks.Generator(in_channels=3,out_channels=3,latent_size=512,num_ID_blocks = 0)
         # self.G = self.G.to(device)
 
+        ############### if not training, only CVAE needed ###############
+        if not self.isTrain:
+            # load CVAE only
+            pretrained_path = '' if not self.isTrain else opt.load_pretrain
+            self.load_net(self.M1, 'M1', opt.epoch_label, pretrained_path)
+            self.load_net(self.E, 'E', opt.epoch_label, pretrained_path)
+            self.load_net(self.M2, 'M2', opt.epoch_label, pretrained_path)
+            self.load_net(self.D, 'D', opt.epoch_label, pretrained_path)
+            return
+        ######################################################################
+
+
         self.downsample = nn.AvgPool2d(kernel_size=3, stride=2, padding=[1, 1], count_include_pad=False)
 
         #Discriminators
