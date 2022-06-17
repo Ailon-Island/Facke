@@ -199,18 +199,30 @@ class CVAE(ModelBase):
         # loss_KL = loss_Rec * 0
         # return [[loss_Rec, loss_KL], img_fake]
 
-
-
     def save(self, epoch_label):
-        
+
         self.save_net(self.M1, 'M1', epoch_label, self.gpu_ids)
         self.save_net(self.E, 'E', epoch_label, self.gpu_ids)
         self.save_net(self.M2, 'M2', epoch_label, self.gpu_ids)
         self.save_net(self.D, 'D', epoch_label, self.gpu_ids)
 
-        self.save_net(self.D1,'D1', epoch_label, self.gpu_ids)
-        self.save_net(self.D2,'D2', epoch_label, self.gpu_ids)
+        self.save_net(self.D1, 'D1', epoch_label, self.gpu_ids)
+        self.save_net(self.D2, 'D2', epoch_label, self.gpu_ids)
         # self.save_net(self.G, 'G', epoch_label, self.gpu_ids)
+
+
+    def load(self, epoch_label):
+
+        self.load_net(self.M1, 'M1', epoch_label, self.gpu_ids)
+        self.load_net(self.E, 'E', epoch_label, self.gpu_ids)
+        self.load_net(self.M2, 'M2', epoch_label, self.gpu_ids)
+        self.load_net(self.D, 'D', epoch_label, self.gpu_ids)
+        if self.isTrain:
+            self.load_net(self.D1, 'D1', epoch_label, self.gpu_ids)
+            self.load_net(self.D2, 'D2', epoch_label, self.gpu_ids)
+        # self.save_net(self.G, 'G', epoch_label, self.gpu_ids)
+
+
     def update_lr(self):
         lr_decay = self.opt.lr / (self.opt.niter_decay + 1)
         lr = self.old_lr - lr_decay
