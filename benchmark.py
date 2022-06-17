@@ -140,10 +140,6 @@ if __name__ == '__main__':
 
         with torch.no_grad():
             for (img_source, img_target), (latent_ID, _), _ in tqdm.tqdm(test_loader):
-                count += img_source.shape[0]
-                if count > opt.benchmark_coarse:
-                    break
-
                 img_source, img_target, latent_ID = img_source.to(device), img_target.to(device), latent_ID.to(device)
 
                 img_fake = swap(img_source, img_target, latent_ID)
@@ -161,6 +157,10 @@ if __name__ == '__main__':
                 img_fake = norm(img_fake)
 
                 metrics['Recon Loss'][-1] += Recloss(img_source, img_fake)
+
+                count += img_source.shape[0]
+                if count >= opt.benchmark_coarse:
+                    break
 
         # calculate mean
         for k in metrics:
@@ -183,10 +183,6 @@ if __name__ == '__main__':
 
         with torch.no_grad():
             for (img_source, img_target), (latent_ID, _), _ in tqdm.tqdm(test_loader):
-                count += img_source.shape[0]
-                if count >= opt.benchmark_fine:
-                    break
-
                 img_source, img_target, latent_ID = img_source.to(device), img_target.to(device), latent_ID.to(device)
 
                 img_fake = swap(img_source, img_target, latent_ID)
@@ -204,6 +200,10 @@ if __name__ == '__main__':
                 img_fake = norm(img_fake)
 
                 metrics_tmp['Recon Loss'] += Recloss(img_source, img_fake)
+
+                count += img_source.shape[0]
+                if count >= opt.benchmark_fine:
+                    break
 
         # calculate mean
         for k in metrics_tmp:
