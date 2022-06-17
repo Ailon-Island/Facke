@@ -131,7 +131,7 @@ if __name__ == '__main__':
     best = {'ID Retrieval': (None, np.inf), 'Recon Loss': (None, np.inf), 'ID Retrieval + Recon Loss': (None, np.inf)}
 
 
-    for epoch_label in check_list:
+    for epoch_label in check_list[:5]:
         model.load(epoch_label)
 
         for k in metrics.keys():
