@@ -130,7 +130,7 @@ if __name__ == '__main__':
         check_list = os.path.join(opt.checkpoints_dir, opt.name, dict_dir)
         check_list = os.listdir(check_list)
         check_list = [i.split('.')[0] for i in check_list]
-        check_list.remove('latest', 0)
+        check_list.remove('latest')
         check_list.sort(key=lambda x: int(re.findall('\d+', x)[0]))
 
     metrics = {'ID Loss': [], 'ID Retrieval': [], 'Recon Loss': []}
