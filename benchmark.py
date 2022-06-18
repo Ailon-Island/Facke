@@ -62,7 +62,7 @@ if __name__ == '__main__':
             opt_file.write('-------------- End ----------------\n')
             
     file_name = os.path.join(save_path, 'benchmark_log.txt')
-    with open(file_name, 'wt') as log_file:
+    with open(file_name, 'a') as log_file:
         log_file.write('===============benchmark start=================\n')
 
     if torch.cuda.is_available():
@@ -222,3 +222,7 @@ if __name__ == '__main__':
 
     benchmark_dir = os.path.join(opt.checkpoints_dir, opt.name, 'benchmark_metrics.pth')
     torch.save(metrics, benchmark_dir)
+
+    file_name = os.path.join(save_path, 'benchmark_log.txt')
+    with open(file_name, 'a') as log_file:
+        log_file.write('===============benchmark end=================\n')
