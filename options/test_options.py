@@ -35,6 +35,8 @@ class TestOptions(BaseOptions):
         self.parser.add_argument("--video_path", type=str, default='./demo_file/multi_people_1080p.mp4', help="path for the video to swap")
         self.parser.add_argument("--temp_path", type=str, default='./temp_results', help="path to save temporarily images")
         self.parser.add_argument("--output_path", type=str, default='./output/', help="results path")
+        self.parser.add_argument("--source_path", type=str, default='./input/source', help="source image path")
+        self.parser.add_argument("--target_path", type=str, default='./input/target', help="target image path")
         self.parser.add_argument('--id_thres', type=float, default=0.03, help='how many test images to run')
         self.parser.add_argument('--no_simswaplogo', action='store_true', help='Remove the watermark')
         self.parser.add_argument('--use_mask', action='store_true', help='Use mask for better result')
@@ -43,6 +45,7 @@ class TestOptions(BaseOptions):
         self.parser.add_argument('--benchmark_coarse', type=int, default=4000, help='samples to run in coarse benchmark')
         self.parser.add_argument('--benchmark_fine', type=int, default=20000, help='samples to run in fine benchmark')
         self.parser.add_argument('--benchmark_skip', type=int, default=1, help='samples to run in fine benchmark')
+        self.parser.add_argument('--num_to_swap', type=int, default=8, help='# of images to get swapped')
 
 
 
