@@ -46,7 +46,7 @@ def logger(msg):
 def read_img(pth, transform, num=8):
     img = []
     for i in range(num):
-        img += [Image.open(os.path.join(pth, '{}.png'.format(i))).convert('RGB')]
+        img += [Image.open(os.path.join(pth, '{}.jpg'.format(i))).convert('RGB')]
         img[-1] = transform(img[-1])
 
     img = torch.stack(img)
@@ -116,7 +116,7 @@ if __name__ == '__main__':
 
     if opt.model == 'ILVR':
         def swap(img_source, img_target, latent_ID):
-            return model.swap(img_source, img_target)
+            return denorm(model.swap(img_source, img_target))
     elif opt.model == 'CVAE':  # CVAE and CVAE-GAN
         def swap(img_source, img_target, latent_ID):
             return model(img_target, latent_ID)
@@ -154,7 +154,7 @@ if __name__ == '__main__':
     logger('Face swapped successfully.')
 
     imgs = np.stack(imgs, axis=0).transpose(0, 2, 3, 1)
-    plot_batch(imgs, os.path.join(save_path, '{}.jpg'.format(opt.name)))
+    plot_batch(imgs, os.path.join(save_path, '{}_{}.jpg'.format(opt.name, opt.swap_title)))
 
     file_name = os.path.join(save_path, 'swap_log.txt')
     with open(file_name, 'a') as log_file:
