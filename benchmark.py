@@ -132,7 +132,7 @@ if __name__ == '__main__':
         check_list = [i.split('.')[0] for i in check_list]
         check_list.remove('latest')
         check_list.sort(key=lambda x: int(re.findall('\d+', x)[0]))
-        check_list = [check_list[0]] + check_list[-1::opt.benchmark_skip][::-1]
+        check_list = [check_list[0]] + check_list[-1::-opt.benchmark_skip][::-1]
         check_list = check_list[1:] if check_list[0] == check_list[1] else check_list
 
     metrics = {'ID Loss': [], 'ID Retrieval': [], 'Recon Loss': []}
