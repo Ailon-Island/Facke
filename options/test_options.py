@@ -42,6 +42,7 @@ class TestOptions(BaseOptions):
         self.parser.add_argument('--finetuned', action='store_true')
         self.parser.add_argument('--benchmark_coarse', type=int, default=4000, help='samples to run in coarse benchmark')
         self.parser.add_argument('--benchmark_fine', type=int, default=20000, help='samples to run in fine benchmark')
+        self.parser.add_argument('--benchmark_skip', type=int, default=1, help='samples to run in fine benchmark')
 
 
 
