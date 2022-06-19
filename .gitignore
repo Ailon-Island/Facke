@@ -27,6 +27,7 @@ output/result.jpg
 output/source.jpg
 output/target.jpg
 output/result.jpg
+input/*
 options/__pycache__/base_options.cpython-38.pyc
 *.pyc
 *.xml
