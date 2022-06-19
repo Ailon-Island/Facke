@@ -47,6 +47,7 @@ class TestOptions(BaseOptions):
         self.parser.add_argument('--benchmark_skip', type=int, default=1, help='samples to run in fine benchmark')
         self.parser.add_argument('--num_to_swap', type=int, default=8, help='# of images to get swapped')
         self.parser.add_argument('--swap_title', type=str, default='', help='title of current swap')
+        self.parser.add_argument('--input_format', type=str, default='jpg', help='format of input images for swapping')
 
 
 

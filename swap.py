@@ -43,10 +43,10 @@ def logger(msg):
     print(msg)
 
 
-def read_img(pth, transform, num=8):
+def read_img(pth, transform, opt):
     img = []
-    for i in range(num):
-        img += [Image.open(os.path.join(pth, '{}.jpg'.format(i))).convert('RGB')]
+    for i in range(opt.num_to_swap):
+        img += [Image.open(os.path.join(pth, '{}.{}'.format(i, opt.input_format))).convert('RGB')]
         img[-1] = transform(img[-1])
 
     img = torch.stack(img)
@@ -126,8 +126,8 @@ if __name__ == '__main__':
 
     model.load(opt.epoch_label)
 
-    img_source = read_img(opt.source_path, transform, opt.num_to_swap)
-    img_target = read_img(opt.target_path, transform, opt.num_to_swap)
+    img_source = read_img(opt.source_path, transform, opt)
+    img_target = read_img(opt.target_path, transform, opt)
 
     with torch.no_grad():
         img_source, img_target = img_source.to(device), img_target.to(device)
