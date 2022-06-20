@@ -24,7 +24,7 @@ Or otherwise, you can go download your own dataset, place it in `datasets\`, and
 
 We have prepared some scripts for demonstration. In specific, you can run SimSwap and ILVR on the dataset to generate demonstrative face swapped images. The result images will be saved in `output\`.
 
-You can run `python demo_SimSwap.py --name {TASK NAME} --epoch_label {BEST EPOCH}` for SimSwap demonstration.  Checkout best epoch list here for our pretrained checkpoints.
+You can run `python demo_SimSwap.py --name {TASK NAME} --epoch_label {BEST EPOCH}` for SimSwap demonstration.  Checkout best epoch list <a href='#tab:best'>here</a> for our pretrained checkpoints.
 
 For ILVR, since the pretrained model does not perfectly fit default settings, you need to give more arguments.
 
@@ -105,7 +105,7 @@ The default value of `--feat_mode` is `w`, which stands for Weak Feature Matchin
 
 ### CVAE-GAN
 
-We have deprecated the original CVAE model. With our scripts, you are able to train CVAE only.
+We have deprecated the original CVAE model. (You can still load our CVAE model because the generator is the same.) With our scripts, you are able to train CVAE only.
 
 ```bash
 python -u ./train_CVAE.py \
@@ -182,5 +182,29 @@ python -u benchmark.py \
 ```
 
 
-## More
+## Miscellaneous
 For more details of using our scripts, you can refer to bash scripts in `shell\`.
+
+Here we provide a table of epoch labels for the best iterations for our checkpoints.
+
+<a name='tab:best'></a>
+
+
+| Model                    | Best Iteration |
+| ------------------------ | -------------- |
+| SimSwap                  | 1248511_iter   |
+| SimSwap-oFM              | 1368511_iter   |
+| SimSwap-wbFM             | 1368511_iter   |
+| SimSwap-nFM              | 1848511_iter   |
+| SimSwap-IG               | 1248511_iter   |
+| SimSwap-IG-oFM           | 1688511_iter   |
+| SimSwap-IG-wbFM          | 1968511_iter   |
+| SimSwap-IG-nFM           | 1208511_iter   |
+| ILVR pretrained          | pretrained     |
+| ILVR finetuned (LR=1e-4) | 670000_iter    |
+| ILVR finetuned (LR=5e-5) | 230000_iter    |
+| ILVR finetuned (LR=1e-5) | 1108511_iter   |
+| ILVR finetuned (LR=5e-6) | 350000_iter    |
+| CVAE                     | 840000_iter    |
+| CVAE-GAN                 | 1468511_iter   |
+
