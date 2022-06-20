@@ -181,3 +181,6 @@ python -u benchmark.py \
 	--model ILVR
 ```
 
+
+## More
+For more details of using our scripts, you can refer to bash scripts in `shell\`.
