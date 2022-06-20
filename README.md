@@ -95,10 +95,10 @@ We have made our own training script before [SimSwap](https://github.com/neuralc
 
 ```bash
 python -u ./train_SimSwap.py \
---batchSize 32 \
---name {TASK NAME} \
---nThreads 32 \
---feat_mode [w, w*, n, o]
+	--batchSize 32 \
+	--name {TASK NAME} \
+	--nThreads 32 \
+	--feat_mode [w, w*, n, o]
 ```
 
 The default value of `--feat_mode` is `w`, which stands for Weak Feature Matching. Similarly, `w*` stands for $\overline{\text{wFM}}$, `n` stands for nFM, and `o` stands for oFM. Additionally, you can feed `--no_intra_ID_random` to disable Identity Grouping. Also, you can explicitly assign `--display_freq` and `--print_freq` (in terms of iteration) to control the frequency in which the script spawns samples and prints training logs.
