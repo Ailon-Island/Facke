@@ -109,10 +109,10 @@ We have deprecated the original CVAE model. With our scripts, you are able to tr
 
 ```bash
 python -u ./train_CVAE.py \
---batchSize 32 \
---model CVAE
---name {TASK NAME} \
---nThreads 32 \
+	--batchSize 32 \
+	--model CVAE
+	--name {TASK NAME} \
+	--nThreads 32 \
 ```
 
 You can also specify `--feat_mode`, `--display_freq`, and `--print_freq`.
