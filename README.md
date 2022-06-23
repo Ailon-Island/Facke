@@ -1,6 +1,6 @@
 # Facke
 
-Project homepage: [Facke](https://github.com/Ailon-Island/Facke). Check out the [report](https://latex.sjtu.edu.cn/read/kbfnwsqzvkwy) for more information.
+Project homepage: [Facke](https://github.com/Ailon-Island/Facke). Check out the [tex](https://latex.sjtu.edu.cn/read/kbfnwsqzvkwy)|[preprint](https://arxiv.org/pdf/2206.11203.pdf) for more information.
 
 Facke is a ~~(course)~~ project on face swapping and fake face generating. The whole project is heavily based on [SimSwap](https://github.com/neuralchen/SimSwap).
 
