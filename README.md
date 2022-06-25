@@ -8,7 +8,9 @@ Facke is a ~~(course)~~ project on face swapping and fake face generating. The w
 
 ### Pretrained Models
 
-It is a nice choice is to download the checkpoints if you want to swap faces with Facke as soon as possible. Checkpoints for utility models are already included in the uploaded .zip file. And you can also get them (`utils\`) from [JBox](https://jbox.sjtu.edu.cn/l/m1Xxtt) | [Baidu](https://pan.baidu.com/s/17fi7DTDqznTLNultA5AWMQ?pwd=b6az). Checkpoints (`checkpoints\`\) for main models are also available at [JBox](https://jbox.sjtu.edu.cn/l/m1Xxtt) | [Baidu](https://pan.baidu.com/s/17fi7DTDqznTLNultA5AWMQ?pwd=b6az).
+It is a nice choice is to download the checkpoints if you want to swap faces with Facke as soon as possible. Checkpoints for utility models are already included in the uploaded .zip file. And you can also get them (`utils\`) from [JBox](https://jbox.sjtu.edu.cn/l/m1Xxtt) | [Baidu](https://pan.baidu.com/s/17fi7DTDqznTLNultA5AWMQ?pwd=b6az) | [Google](https://drive.google.com/drive/folders/19-04v2683KSc14o1ahPh6m4jJJt5X8rt?usp=sharing) | [Mega](https://mega.nz/folder/JUpmGYwa#jaHarRjyqKYQXSP8op3zcQ). Checkpoints (`checkpoints\`\) for main models are also available at [JBox](https://jbox.sjtu.edu.cn/l/m1Xxtt) | [Baidu](https://pan.baidu.com/s/17fi7DTDqznTLNultA5AWMQ?pwd=b6az) | [Google](https://drive.google.com/drive/folders/19-04v2683KSc14o1ahPh6m4jJJt5X8rt?usp=sharing) | [Mega](https://mega.nz/folder/JUpmGYwa#jaHarRjyqKYQXSP8op3zcQ).
+
+**Special thanks to [hcl14](https://github.com/hcl14) for getting checkpoints available on Google Drive and Mega!**
 
 To ensure that you are fully prepared, you should carefully compare the location you place the downloaded checkpoints: both `checkpoints\` and `utils\` shall be merged with the directories with the identical name in `Facke\` root directory.
 
