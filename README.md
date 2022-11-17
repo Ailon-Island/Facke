@@ -8,7 +8,7 @@ Facke is a ~~(course)~~ project on face swapping and fake face generating. The w
 
 ### Pretrained Models
 
-It is a nice choice is to download the checkpoints if you want to swap faces with Facke as soon as possible. Checkpoints for utility models are already included in the uploaded .zip file. And you can also get them (`utils\`) from [JBox](https://jbox.sjtu.edu.cn/l/m1Xxtt) | [Baidu](https://pan.baidu.com/s/17fi7DTDqznTLNultA5AWMQ?pwd=b6az) | [Google](https://drive.google.com/drive/folders/19-04v2683KSc14o1ahPh6m4jJJt5X8rt?usp=sharing) | [Mega](https://mega.nz/folder/JUpmGYwa#jaHarRjyqKYQXSP8op3zcQ). Checkpoints (`checkpoints\`\) for main models are also available at [JBox](https://jbox.sjtu.edu.cn/l/m1Xxtt) | [Baidu](https://pan.baidu.com/s/17fi7DTDqznTLNultA5AWMQ?pwd=b6az) | [Google](https://drive.google.com/drive/folders/19-04v2683KSc14o1ahPh6m4jJJt5X8rt?usp=sharing) | [Mega](https://mega.nz/folder/JUpmGYwa#jaHarRjyqKYQXSP8op3zcQ).
+It is a nice choice is to download the checkpoints if you want to swap faces with Facke as soon as possible. Checkpoints for utility models (`utils\`) and for main models (`checkpoints\`) are available at [JBox](https://jbox.sjtu.edu.cn/l/m1Xxtt) | [Baidu](https://pan.baidu.com/s/17fi7DTDqznTLNultA5AWMQ?pwd=b6az) | [Google](https://drive.google.com/drive/folders/19-04v2683KSc14o1ahPh6m4jJJt5X8rt?usp=sharing) | [Mega](https://mega.nz/folder/JUpmGYwa#jaHarRjyqKYQXSP8op3zcQ).
 
 **Special thanks to [hcl14](https://github.com/hcl14) for getting checkpoints available on Google Drive and Mega!**
 
@@ -16,7 +16,7 @@ To ensure that you are fully prepared, you should carefully compare the location
 
 ### Dataset
 
-Our dataloader is specified for the dataset of [VGGFace2-HQ](https://github.com/NNNNAI/VGGFace2-HQ). You can download a modified version (`datasets\`) [here](https://jbox.sjtu.edu.cn/l/m1Xxtt). (We have sliced the dataset into train and test set.) As an alternative of downloading separated files, you can instead download the `datasets\VGGFace2-HQ.zip` and unzip it in the way as we do on the cloud drive.
+Our dataloader is specified for the dataset of [VGGFace2-HQ](https://github.com/NNNNAI/VGGFace2-HQ). You can download a modified version (`datasets\`) from [JBox](https://jbox.sjtu.edu.cn/l/m1Xxtt) | [Baidu](https://pan.baidu.com/s/17fi7DTDqznTLNultA5AWMQ?pwd=b6az). (We have sliced the dataset into train and test set.) As an alternative of downloading separated files, you can instead download the `datasets\VGGFace2-HQ.zip` and unzip it in the way as we do on the cloud drive. 
 
 Or otherwise, you can go download your own dataset, place it in `datasets\`, and then run `python create_dataset.py --data_root datasets\{YOUR DATASET}` to generate latent ID for each image (Don't worry! Our dataloader will also check and make up the missing latent ID!). Some of our training schedules require identity labels. We only support the way of labeling with directory name. You shall refer to the structure of our modified VGGFace2-HQ dataset. If you don't need such training schedules, you can place all your pictures in one directory (like `datasets\{DATASET}\train\images\1\`). The file structure for VGGFace2-HQ is
 
